@@ -14,24 +14,33 @@
 # neut titres, slop parameter and C50 for that outcome, compute the
 # population-level VE by integrating over population neut titres
 ve_from_mean_log10_neut <- function(
-  mean_log10_neut,
+  mean_log10_neut_vec,
   sd_log10_neut,
   log_k,
-  c50
+  c50_vec,
+  method = c("adaptive", "gaussian"),
+  lower = -3,
+  upper = 3
 ) {
 
-  integrate_fun <- function(x) {
-    prob <- prob_avoid_outcome(log10_neut = x, log_k = log_k, c50 = c50)
-    weight <- dnorm(x, mean_log10_neut, sd_log10_neut)
-    prob * weight
-  }
+  # choose the method and dispatch to the appropriate integration function
+  method <- match.arg(method)
 
-  integral <- integrate(
-    f = integrate_fun,
-    lower = mean_log10_neut - 5 * sd_log10_neut,
-    upper = mean_log10_neut + 5 * sd_log10_neut
+  integrator <- switch(
+    method,
+    adaptive = adaptive_ve_integrator,
+    gaussian = gaussian_ve_integrator
   )
 
-  integral$value
+  integrals <- integrator(
+    c50_vec = c50_vec,
+    mean_log10_neut_vec = mean_log10_neut_vec,
+    sd_log10_neut = sd_log10_neut,
+    log_k = log_k,
+    lower = lower,
+    upper = upper
+  )
+
+  integrals
 
 }
