@@ -8,23 +8,10 @@ source("packages.R")
 # estimates from Khoury et al
 khoury_natmed_estimates <- readRDS("data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS")
 
-
-khoury_natmed_estimates$SEM
-
 # get distributions over ratios of neutralising antibody titres to convalescents
 # (absolute neut titres are not comparable between studies, so relative to
 # convalescent/other vaccine is the only comparable metric)
 neut_ratios <- get_khoury_neut_ratios(khoury_natmed_estimates)
-
-# standard deviation of population distribution in log10 neutralising antibody
-# titres
-sd_log10_neut_titres <- neut_ratios$sd_log10_ratio_neut[1]
-
-# estimated slope of the sigmoidal relationship between neuts and VEs from Khoury et al.
-log_k <- 1.130661
-
-# estimated log10 neut titre C50 for protection against symptomatic disease
-c50_symptoms <- -0.6966127
 
 # VEs against different outcomes disease for different products and doses
 # from national plan parameters doc
@@ -52,7 +39,8 @@ ve_estimates <- tibble::tribble(
   "death", "Pfizer", 2, 0.95
 )
 
-# set up greta model to infer mean neuts, c50s, and logk
+# build a greta model to infer mean neuts, c50s, and the slope of the
+# relationship between VEs and neut titres
 
 # record unique values of levels; parameter orders correspond to these
 outcomes <- unique(ve_estimates$outcome)
@@ -71,13 +59,15 @@ ve_estimates_modelling <- ve_estimates %>%
   )
 
 # get index to neut ratios, to ensure they are in the correct order
-neut_ratio_idx <- match(neut_ratios$product, products)
+neut_ratios_vaccine <- neut_ratios %>%
+  filter(product != "infection")
+neut_ratio_vaccine_idx <- match(neut_ratios_vaccine$product, products)
 
 # model log k - must be positive and start with a prior mean and mode of 1
 log_k <- normal(1, 1, truncation = c(0, Inf))
 
 # observation error on logit VEs
-logit_ve_obs_sd <- normal(0, 1, truncation = c(0, Inf))
+ve_logit_obs_sd <- normal(0, 1, truncation = c(0, Inf))
 
 # c50s for different outcomes
 c50s <- normal(0, 1, dim = 5)
@@ -86,8 +76,8 @@ c50s <- normal(0, 1, dim = 5)
 # (of the log10 ratio to convalescent) and standard error (of the ratio to
 # convalescent)
 dose_2_mean_log10_neuts <- normal(
-  mean = neut_ratios$mean_log10_ratio_neut[neut_ratio_idx],
-  sd = neut_ratios$se_mean_log10_ratio_neut[neut_ratio_idx]
+  mean = neut_ratios_vaccine$mean_log10_ratio_neut[neut_ratio_vaccine_idx],
+  sd = neut_ratios_vaccine$sem_log10_neut[neut_ratio_vaccine_idx]
 )
 
 # difference in peak neut titre between first and second doses of each
@@ -128,16 +118,10 @@ ve_expected <- ve_from_mean_log10_neut(
 ve_expected_logit <- log(ve_expected / (1 - ve_expected))
 
 # likelihood for VEs on logit scale, to better capture variation on observation standard error
-distribution(ve_estimates_modelling$ve_logit) <- normal(ve_expected_logit, obs_sd)
-
-# likelihood for observed relative neut concentrations
-distribution(neut_ratios$mean_log10_ratio_neut) <- normal(
-  mean = dose_2_mean_log10_neuts,
-  sd = neut_ratios$se_mean_log10_ratio_neut
-)
+distribution(ve_estimates_modelling$ve_logit) <- normal(ve_expected_logit, ve_logit_obs_sd)
 
 # define and fit model
-m <- model(log_k, obs_sd, c50s, dose_1_mean_log10_neuts, dose_2_mean_log10_neuts)
+m <- model(log_k, ve_logit_obs_sd, c50s, dose_1_mean_log10_neuts, dose_2_mean_log10_neuts)
 draws <- mcmc(m, chains = 10)
 
 # check fit
@@ -145,66 +129,48 @@ coda::gelman.diag(draws, autoburnin = FALSE, multivariate = FALSE)
 plot(draws)
 summary(draws)
 
-neut_ratios
+vaccine_mean_log10_neuts_mat
+
+# add booster and convalescent mean log10 neut variables. 5-fold neuts of pfizer
+# dose 2 for booster (add log10(5) to log10 neut) and 0 log10 neuts for
+# convalescent
+
+# organise the code to make ve predictions based on outcome, product, dose, time
+# since dose etc. (need to add in decay parameter)
+
+# then fit decay parameter in same model to make predictions with full uncertainty
+
+# predict to full range of values to plot
+
+# show each as a ribbon (red for AZ, purple for Pfizer, grey for infection) of
+#   CIs
+# show the number of doses by the darkness of the colours
+# add dots for the assumed initial VEs from the parameters doc, and show the
+#   Andrews waning data, with bars
+
+# then do TP reductions
 
 
-# does it make sense to model with c50s as fold of convalescent?
+ve_expected_sims <- calculate(ve_expected, values = draws, nsim = 1000)[[1]][, , 1]
+ve_predictions <- colMeans(ve_expected_sims)
 
-# Increases uncertainty in location of vaccine neuts (because it's relative)
-# decreases uncertainty in location of non-vaccine neuts
-
-# so instead, for dose 2 priors, use the SD and sample size to compute the se without removing convalescent
-
-# and use SD and NumberIndividuals_Conv to get SE to simulate the convalescent neut mean
-
-
-# add on a booster (5-fold neuts of pfizer dose 2) and convalescent (0 log10
-# neuts) to neut concentrations to enable predictions
-
-
-# re-compute relative neutralising antibody titres induced by AZ and Pfizer shortly after
-# 1st and 2nd doses from this C50 and VEs:
-#
-#   # add a booster assumption - 5-fold the neuts of Pfizer dose 2
-#   bind_rows(
-#     filter(.,
-#            product == "Pfizer",
-#            dose == 2) %>%
-#       mutate(
-#         dose = 3,
-#         optimal_log10_neut = log10(5 * 10 ^ optimal_log10_neut)
-#       )
-#   )
 
 # compare observed and predicted VEs
-evaluate_ves <- ve_estimates %>%
-  left_join(
-    optimal_log10_neuts,
-    by = c("product", "dose")
-  ) %>%
-  left_join(
-    c50_estimates,
-    by = "outcome"
-  ) %>%
-  rowwise() %>%
+ve_estimates %>%
   mutate(
-    predicted_ve = ve_from_mean_log10_neut(
-      mean_log10_neut = optimal_log10_neut,
-      sd_log10_neut = sd_log10_neut_titres,
-      log_k = log_k,
-      c50 = c50
-    ),
+    predicted_ve = ve_predictions,
     .after = ve
-  ) %>%
-  ungroup() %>%
-  select(
-    -optimal_log10_neut,
-    -c50
   ) %>%
   mutate(
     difference = predicted_ve - ve,
     percent_difference = 100 * (1 - predicted_ve / ve)
   )
+
+# posterior predictive checks
+bayesplot::ppc_ecdf_overlay(ve_estimates$ve, ve_expected_sims)
+bayesplot::ppc_dens(ve_estimates$ve, ve_expected_sims)
+
+
 
 # calibrate the neut decay estimate for vaccination-derived immunity
 
