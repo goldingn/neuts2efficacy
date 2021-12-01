@@ -1,17 +1,29 @@
 # calibrate Deb's model against VE waning estimates
+
+# load packages and functions
 source("packages.R")
 . <- list.files("R", full.names = TRUE) %>%
   lapply(source)
 
+# estimates from Khoury et al
+khoury_natmed_estimates <- readRDS("data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS")
+
+# get ratios of neutralising antibody titres to convalescents (absolute neut
+# titres are not comparable between studies, so relative to convalescent/other
+# vacccine is the only comparable metric)
+neut_ratios <- get_khoury_neut_ratios(khoury_natmed_estimates)
+
 # standard deviation of population distribution in log10 neutralising antibody
 # titres
-sd_log10_neut_titres <- 0.4647092
-# estimated slope of the sigmoidal relationship between neuts and VEs
+sd_log10_neut_titres <- khoury_natmed_estimates$PooledSD[1]
+
+# estimated slope of the sigmoidal relationship between neuts and VEs from Khoury et al.
 log_k <- 1.130661
+
 # estimated log10 neut titre C50 for protection against symptomatic disease
 c50_symptoms <- -0.6966127
 
-# list VE against symptomatic disease for different products and doses
+# VEs against different outcomes disease for different products and doses
 # from national plan parameters doc
 ve_estimates <- tibble::tribble(
   ~outcome, ~product, ~dose, ~ve,
@@ -37,8 +49,8 @@ ve_estimates <- tibble::tribble(
   "death", "Pfizer", 2, 0.95
 )
 
-# compute neutralising antibody titres induced by AZ and Pfizer shortly after
-# 1st and 2nd doses:
+# re-compute relative neutralising antibody titres induced by AZ and Pfizer shortly after
+# 1st and 2nd doses from this C50 and VEs:
 optimal_log10_neuts <- ve_estimates %>%
   filter(
     outcome == "symptoms"
@@ -67,7 +79,7 @@ optimal_log10_neuts <- ve_estimates %>%
   )
 
 # calibrate c50s for the other parameters from their initial VEs and the modeled neut titres
-c50_estimates = ve_estimates %>%
+c50_estimates <- ve_estimates %>%
   left_join(
     optimal_log10_neuts,
     by = c("product", "dose")
