@@ -27,6 +27,14 @@ gaussian_ve_integrator <- function(
   n_quads <- length(quads$values)
 
   # expand out the vector parameters of the logit-normal density to matrices
+  if (is.vector(c50_vec) & is.vector(mean_log10_neut_vec)) {
+    c50_vec <- as.matrix(c50_vec)
+    mean_log10_neut_vec <- as.matrix(mean_log10_neut_vec)
+    vector_input <- TRUE
+  } else {
+    vector_input <- FALSE
+  }
+
   repeater <- rep(1, n_quads)
   c50_mat <- c50_vec[, repeater]
   mean_log10_neut_mat <- mean_log10_neut_vec[, repeater]
@@ -52,6 +60,10 @@ gaussian_ve_integrator <- function(
   }
 
   ves <- function_values %*% weights
+
+  if(vector_input) {
+    dim(ves) <- NULL
+  }
 
   ves
 
