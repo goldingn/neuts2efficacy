@@ -8,14 +8,17 @@ source("packages.R")
 # estimates from Khoury et al
 khoury_natmed_estimates <- readRDS("data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS")
 
-# get ratios of neutralising antibody titres to convalescents (absolute neut
-# titres are not comparable between studies, so relative to convalescent/other
-# vacccine is the only comparable metric)
+
+khoury_natmed_estimates$SEM
+
+# get distributions over ratios of neutralising antibody titres to convalescents
+# (absolute neut titres are not comparable between studies, so relative to
+# convalescent/other vaccine is the only comparable metric)
 neut_ratios <- get_khoury_neut_ratios(khoury_natmed_estimates)
 
 # standard deviation of population distribution in log10 neutralising antibody
 # titres
-sd_log10_neut_titres <- khoury_natmed_estimates$PooledSD[1]
+sd_log10_neut_titres <- neut_ratios$sd_log10_ratio_neut[1]
 
 # estimated slope of the sigmoidal relationship between neuts and VEs from Khoury et al.
 log_k <- 1.130661
@@ -49,46 +52,129 @@ ve_estimates <- tibble::tribble(
   "death", "Pfizer", 2, 0.95
 )
 
-# re-compute relative neutralising antibody titres induced by AZ and Pfizer shortly after
-# 1st and 2nd doses from this C50 and VEs:
-optimal_log10_neuts <- ve_estimates %>%
-  filter(
-    outcome == "symptoms"
-  ) %>%
-  rowwise() %>%
+# set up greta model to infer mean neuts, c50s, and logk
+
+# record unique values of levels; parameter orders correspond to these
+outcomes <- unique(ve_estimates$outcome)
+doses <- unique(ve_estimates$dose)
+products <- unique(ve_estimates$product)
+
+# set up ve data for modelling
+ve_estimates_modelling <- ve_estimates %>%
   mutate(
-    optimal_log10_neut = find_log10_neut_for_product(
-      ve_symptomatic = ve,
-      c50_symptoms = c50_symptoms
-    )
-  ) %>%
-  select(
-    -outcome,
-    -ve
-  ) %>%
-  ungroup() %>%
-  # add a booster assumption - 5-fold the neuts of Pfizer dose 2
-  bind_rows(
-    filter(.,
-           product == "Pfizer",
-           dose == 2) %>%
-      mutate(
-        dose = 3,
-        optimal_log10_neut = log10(5 * 10 ^ optimal_log10_neut)
-      )
+    # get indices to outcomes, products, doses, to pull together predictions
+    outcomes_idx = match(outcome, outcomes),
+    doses_idx = match(dose, doses),
+    product_idx = match(product, products),
+    # logit transform ves to better define likelihood
+    ve_logit = qlogis(ve)
   )
 
-# calibrate c50s for the other parameters from their initial VEs and the modeled neut titres
-c50_estimates <- ve_estimates %>%
-  left_join(
-    optimal_log10_neuts,
-    by = c("product", "dose")
-  ) %>%
-  group_by(outcome) %>%
-  summarise(
-    c50 = find_c50(ve, optimal_log10_neut),
-    .groups = "drop"
-  )
+# get index to neut ratios, to ensure they are in the correct order
+neut_ratio_idx <- match(neut_ratios$product, products)
+
+# model log k - must be positive and start with a prior mean and mode of 1
+log_k <- normal(1, 1, truncation = c(0, Inf))
+
+# observation error on logit VEs
+logit_ve_obs_sd <- normal(0, 1, truncation = c(0, Inf))
+
+# c50s for different outcomes
+c50s <- normal(0, 1, dim = 5)
+
+# mean log10 peak neuts for second doses of AZ and Pfizer use the Khoury mean
+# (of the log10 ratio to convalescent) and standard error (of the ratio to
+# convalescent)
+dose_2_mean_log10_neuts <- normal(
+  mean = neut_ratios$mean_log10_ratio_neut[neut_ratio_idx],
+  sd = neut_ratios$se_mean_log10_ratio_neut[neut_ratio_idx]
+)
+
+# difference in peak neut titre between first and second doses of each
+# (constrain dose 2 to not be lower than dose 1)
+dose_2_vs_1_mean_log10_neut_increase <- normal(0, 1, dim = 2, truncation = c(0, Inf))
+
+# mean log10 peak neuts for first doses of AZ and Pfizer respectively
+dose_1_mean_log10_neuts <- dose_2_mean_log10_neuts - dose_2_vs_1_mean_log10_neut_increase
+
+# matrix of dose-by-product neuts for lookup; rows are products, columns are
+# doses
+vaccine_mean_log10_neuts_mat <- cbind(
+  dose_1_mean_log10_neuts, dose_2_mean_log10_neuts
+)
+
+# pull out vectors of parameters
+vaccine_idx <- cbind(
+  ve_estimates_modelling$product_idx,
+  ve_estimates_modelling$doses_idx
+)
+
+c50_vec <- c50s[ve_estimates_modelling$outcomes_idx]
+mean_log10_neut_vec <- vaccine_mean_log10_neuts_mat[vaccine_idx]
+
+# population standard deviation of log10 neut titres
+sd_log10_neut_titres <- neut_ratios$sd_log10_ratio_neut[1]
+
+# expected VEs for all combinations
+ve_expected <- ve_from_mean_log10_neut(
+  mean_log10_neut_vec = mean_log10_neut_vec,
+  c50_vec = c50_vec,
+  sd_log10_neut = sd_log10_neut_titres,
+  log_k = log_k,
+  method = "gaussian"
+)
+
+# convert to logit scale
+ve_expected_logit <- log(ve_expected / (1 - ve_expected))
+
+# likelihood for VEs on logit scale, to better capture variation on observation standard error
+distribution(ve_estimates_modelling$ve_logit) <- normal(ve_expected_logit, obs_sd)
+
+# likelihood for observed relative neut concentrations
+distribution(neut_ratios$mean_log10_ratio_neut) <- normal(
+  mean = dose_2_mean_log10_neuts,
+  sd = neut_ratios$se_mean_log10_ratio_neut
+)
+
+# define and fit model
+m <- model(log_k, obs_sd, c50s, dose_1_mean_log10_neuts, dose_2_mean_log10_neuts)
+draws <- mcmc(m, chains = 10)
+
+# check fit
+coda::gelman.diag(draws, autoburnin = FALSE, multivariate = FALSE)
+plot(draws)
+summary(draws)
+
+neut_ratios
+
+
+# does it make sense to model with c50s as fold of convalescent?
+
+# Increases uncertainty in location of vaccine neuts (because it's relative)
+# decreases uncertainty in location of non-vaccine neuts
+
+# so instead, for dose 2 priors, use the SD and sample size to compute the se without removing convalescent
+
+# and use SD and NumberIndividuals_Conv to get SE to simulate the convalescent neut mean
+
+
+# add on a booster (5-fold neuts of pfizer dose 2) and convalescent (0 log10
+# neuts) to neut concentrations to enable predictions
+
+
+# re-compute relative neutralising antibody titres induced by AZ and Pfizer shortly after
+# 1st and 2nd doses from this C50 and VEs:
+#
+#   # add a booster assumption - 5-fold the neuts of Pfizer dose 2
+#   bind_rows(
+#     filter(.,
+#            product == "Pfizer",
+#            dose == 2) %>%
+#       mutate(
+#         dose = 3,
+#         optimal_log10_neut = log10(5 * 10 ^ optimal_log10_neut)
+#       )
+#   )
 
 # compare observed and predicted VEs
 evaluate_ves <- ve_estimates %>%

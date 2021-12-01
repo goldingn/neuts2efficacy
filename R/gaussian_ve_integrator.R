@@ -24,7 +24,7 @@ gaussian_ve_integrator <- function(
   # dimensions and quadrature rules
   n_obs <- length(mean_log10_neut_vec)
   quads <- get_quad_rules(n_obs, lower = lower, upper = upper)
-  n_quads <- ncol(quads$values)
+  n_quads <- length(quads$values)
 
   # expand out the vector parameters of the logit-normal density to matrices
   repeater <- rep(1, n_quads)
@@ -36,7 +36,7 @@ gaussian_ve_integrator <- function(
 
   # get function values in matrix
   function_values <- logit_normal_density(
-    x = quads$values,
+    x = values_matrix,
     c50 = c50_mat,
     mean_log10_neut = mean_log10_neut_mat,
     sd_log10_neut = sd_log10_neut,
