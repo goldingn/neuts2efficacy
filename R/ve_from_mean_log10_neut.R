@@ -19,8 +19,8 @@ ve_from_mean_log10_neut <- function(
   log_k,
   c50_vec,
   method = c("adaptive", "gaussian"),
-  lower = -3,
-  upper = 3
+  lower = -10,
+  upper = 10
 ) {
 
   # choose the method and dispatch to the appropriate integration function

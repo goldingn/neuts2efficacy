@@ -8,7 +8,9 @@
 #' @author Nick Golding
 #' @export
 # get quadrature rules (values and weights) for Legendre Gaussian quadrature
-get_quad_rules <- function(n_observations, n_quads = 20, lower = -3, upper = 3) {
+get_quad_rules <- function(n_observations, lower = -3, upper = 3) {
+
+  n_quads <- round(5 * (upper - lower))
 
   # get quadrature rules on (-1, 1)
   quads <- gaussquad::legendre.quadrature.rules(n_quads)[[n_quads]]
