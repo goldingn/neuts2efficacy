@@ -7,8 +7,8 @@ source("packages.R")
 
 # get distributions over ratios of neutralising antibody titres to convalescents
 # from Khoury et al. (absolute neut titres are not comparable between studies,
-# so relative to convalescent/other vaccine is the only comparable metric)
-neut_ratios <- get_khoury_neut_ratios(khoury_natmed_estimates)
+# so these are expressed as fold of convalescent)
+neut_ratios_vaccine <- get_neut_ratios_vaccine()
 
 # VEs against different outcomes for different products and doses, on different
 # days since peak vaccination impact
@@ -33,9 +33,6 @@ ve_data_modelling <- ve_estimates %>%
   )
 
 # get index to neut ratios, to ensure they are in the correct order
-neut_ratios_vaccine <- neut_ratios %>%
-  filter(product != "infection")
-
 neut_ratio_vaccine_idx <- match(neut_ratios_vaccine$product, products)
 
 # define greta model
@@ -101,7 +98,7 @@ mean_log10_neut_vec <- log10_neut_over_time(
 )
 
 # population standard deviation of log10 neut titres
-sd_log10_neut_titres <- neut_ratios$sd_log10_ratio_neut[1]
+sd_log10_neut_titres <- neut_ratios_vaccine$sd_log10_ratio_neut[1]
 
 # expected VEs for all combinations
 ve_expected <- ve_from_mean_log10_neut(
@@ -385,6 +382,9 @@ ggsave("figures/ve_waning.png",
 
 # to do:
 
+# put model fitting and prediction into functions
+
 # do TP reductions
 
-# look at implementing waning
+# try prediction of VEs to new variants (especially immune escape variants),
+# based on variant neut titres

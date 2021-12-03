@@ -7,18 +7,32 @@
 #' @return
 #' @author Nick Golding
 #' @export
-get_khoury_neut_ratios <- function(khoury_natmed_estimates) {
+get_neut_ratios_vaccine <- function() {
 
-  khoury_natmed_file <- "data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS"
+  khoury_natmed_url <- "https://github.com/InfectionAnalytics/COVID19-ProtectiveThreshold/raw/main/Comparing%20Severe%20vs%20Mild%20Infection/SummaryTable_Efficacy_NeutRatio_SD_SEM.csv"
+  khoury_natmed_file <- "data/SummaryTable_Efficacy_NeutRatio_SD_SEM.csv"
+
+  if (!file.exists(khoury_natmed_file)) {
+    download.file(khoury_natmed_url, khoury_natmed_file)
+  }
 
   khoury_natmed_file %>%
-    readRDS() %>%
+    read_csv(
+      col_types = cols(
+        .default = col_skip(),
+        Study = col_character(),
+        SD = col_double(),
+        NeutRatio_cens = col_double(),
+        NumberIndividuals_Vaccine = col_double(),
+        PooledSD = col_double()
+      )
+    ) %>%
     filter(
-      Study %in% c("AstraZeneca", "Pfizer", "Convalescence")
+      Study %in% c("Astra", "Pfizer", "Convalescence")
     ) %>%
     mutate(
       Study = case_when(
-        Study == "AstraZeneca" ~ "AZ",
+        Study == "Astra" ~ "AZ",
         Study == "Pfizer" ~ "Pfizer",
         Study == "Convalescence" ~ "infection"
       )
@@ -40,6 +54,9 @@ get_khoury_neut_ratios <- function(khoury_natmed_estimates) {
       sem_log10_neut = se,
       # shared SD of the normal distribution over log10 neuts
       sd_log10_ratio_neut = PooledSD
+    ) %>%
+    filter(
+      product != "infection"
     )
 
 }
