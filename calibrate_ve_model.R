@@ -187,7 +187,8 @@ ve_data_modelling %>%
 # posterior predictive check on ECDF of observed VEs
 bayesplot::ppc_ecdf_overlay(ve_data_modelling$ve, ve_fitted_sims)
 
-log10_booster_multipler <- log10(5)
+booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
+log10_booster_multipler <- log10(booster_multiplier)
 
 # prepare for prediction
 log10_neuts_list <- list(
@@ -330,7 +331,8 @@ ve_predictions %>%
       y = ve
     ),
     height = 0,
-    alpha = 0.5,
+    alpha = 0.25,
+    size = 1,
     data = ve_data_plotting
   ) +
   geom_errorbar(
