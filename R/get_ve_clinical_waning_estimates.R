@@ -7,7 +7,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-get_ve_waning_andrews <- function() {
+get_ve_clinical_waning_estimates <- function() {
 
   tibble::tribble(
     ~outcome, ~product, ~weeks, ~ve, ~ve_lower, ~ve_upper,
@@ -46,6 +46,7 @@ get_ve_waning_andrews <- function() {
       .after = product
     ) %>%
     mutate(
+      source = "Andrews",
       # convert 'weeks' to days post second dose text says week 1 is 7-13 days,
       # so presumably week 0 is 0-6 days. Compute midpoint in days of other
       # periods accordingly. For 20+ weeks, assume the midpoint of 20-30 weeks.

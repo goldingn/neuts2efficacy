@@ -10,8 +10,8 @@
 get_ve_estimates <- function() {
 
   bind_rows(
-    get_ve_peak_estimates(),
-    get_ve_waning_andrews()
+    get_ve_transmission_estimates(),
+    get_ve_clinical_waning_estimates()
   )
 
 }

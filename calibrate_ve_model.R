@@ -321,7 +321,7 @@ ve_predictions %>%
       ymax = ve_predict_upper_50
     ),
     size = 0.25,
-    colour = grey(0.4)
+    colour = grey(0.6)
   ) +
   geom_errorbarh(
     aes(
@@ -339,7 +339,7 @@ ve_predictions %>%
       ymax = ve_upper,
       x = days
     ),
-    width = 0,
+    width = 7,
     alpha = 0.5,
     data = ve_data_plotting
   ) +
@@ -357,7 +357,7 @@ ve_predictions %>%
     values = c(
       "mRNA booster" = lighten("darkorchid4", 0.1),
       "Pfizer vaccine dose 2" = lighten("darkorchid1", 0.1),
-      "Infection" = grey(0.8),
+      "Infection" = grey(0.9),
       "AZ vaccine dose 2" = lighten("firebrick1", 0.1),
       "Pfizer vaccine dose 1" = lighten("darkorchid1", 0.8),
       "AZ vaccine dose 1" = lighten("firebrick1", 0.8)
@@ -366,22 +366,22 @@ ve_predictions %>%
   scale_alpha_manual(
     values = c("two doses" = 0.8, "one dose" = 0.1)
   ) +
-  ylab("Efficacy against Delta variant") +
+  coord_cartesian(
+    xlim = c(0, 200)
+  ) +
+  ylab("Efficacy") +
   xlab("Days since vaccination") +
-  ggtitle("Population average protection against negative outcomes") +
+  ggtitle("Predicted waning in vaccine efficacy",
+          "against the Delta variant") +
   theme_minimal()
 
 ggsave("figures/ve_waning.png",
-       width = 10,
+       width = 9,
        height = 6,
        bg = "white")
 
 
 # to do:
-
-# add ve estimate uncertainty to the plot
-
-# add a hierarchical structure over independent log_ks for outcomes
 
 # do TP reductions
 
