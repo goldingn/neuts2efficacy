@@ -5,102 +5,14 @@ source("packages.R")
 . <- list.files("R", full.names = TRUE) %>%
   lapply(source)
 
-# estimates from Khoury et al
-khoury_natmed_estimates <- readRDS("data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS")
-
 # get distributions over ratios of neutralising antibody titres to convalescents
-# (absolute neut titres are not comparable between studies, so relative to
-# convalescent/other vaccine is the only comparable metric)
+# from Khoury et al. (absolute neut titres are not comparable between studies,
+# so relative to convalescent/other vaccine is the only comparable metric)
 neut_ratios <- get_khoury_neut_ratios(khoury_natmed_estimates)
 
-# VEs against different outcomes disease for different products and doses
-# from national plan parameters doc
-ve_estimates <- tibble::tribble(
-  ~outcome, ~product, ~dose, ~ve,
-  "acquisition", "AZ", 1, 0.46,
-  "acquisition", "AZ", 2, 0.67,
-  "acquisition", "Pfizer", 1, 0.57,
-  "acquisition", "Pfizer", 2, 0.8,
-  "transmission", "AZ", 1, 0.05,
-  "transmission", "AZ", 2, 0.24,
-  "transmission", "Pfizer", 1, 0.17,
-  "transmission", "Pfizer", 2, 0.50,
-  "symptoms", "AZ", 1, 0.4,
-  "symptoms", "AZ", 2, 0.71,
-  "symptoms", "Pfizer", 1, 0.58,
-  "symptoms", "Pfizer", 2, 0.84,
-  "hospitalisation", "AZ", 1, 0.81,
-  "hospitalisation", "AZ", 2, 0.93,
-  "hospitalisation", "Pfizer", 1, 0.92,
-  "hospitalisation", "Pfizer", 2, 0.97,
-  "death", "AZ", 1, 0.88,
-  "death", "AZ", 2, 0.93,
-  "death", "Pfizer", 1, 0.89,
-  "death", "Pfizer", 2, 0.95
-) %>%
-  mutate(
-    days = 0,
-    .before = ve
-  )
-
-# data for 16+ dose 2 waning from Andrews
-ve_waning_andrews <- tibble::tribble(
-  ~outcome, ~product, ~weeks, ~ve,
-  "symptoms", "AZ", "1", 0.627,
-  "symptoms", "AZ", "2-9", 0.667,
-  "symptoms", "AZ", "10-14", 0.593,
-  "symptoms", "AZ", "15-19", 0.526,
-  "symptoms", "AZ", "20+", 0.473,
-  "symptoms", "Pfizer", "1", 0.924,
-  "symptoms", "Pfizer", "2-9", 0.898,
-  "symptoms", "Pfizer", "10-14", 0.803,
-  "symptoms", "Pfizer", "15-19", 0.734,
-  "symptoms", "Pfizer", "20+", 0.697,
-  "hospitalisation", "AZ", "1", 0.939,
-  "hospitalisation", "AZ", "2-9", 0.952,
-  "hospitalisation", "AZ", "10-14", 0.914,
-  "hospitalisation", "AZ", "15-19", 0.868,
-  "hospitalisation", "AZ", "20+", 0.770,
-  "hospitalisation", "Pfizer", "1", 0.997,
-  "hospitalisation", "Pfizer", "2-9", 0.984,
-  "hospitalisation", "Pfizer", "10-14", 0.965,
-  "hospitalisation", "Pfizer", "15-19", 0.944,
-  "hospitalisation", "Pfizer", "20+", 0.927,
-  "death", "AZ", "2-9", 0.941,
-  "death", "AZ", "10-14", 0.924,
-  "death", "AZ", "15-19", 0.891,
-  "death", "AZ", "20+", 0.787,
-  "death", "Pfizer", "2-9", 0.982,
-  "death", "Pfizer", "10-14", 0.952,
-  "death", "Pfizer", "15-19", 0.939,
-  "death", "Pfizer", "20+", 0.904,
-) %>%
-  mutate(
-    # add dose and days info
-    dose = 2,
-    .after = product
-  ) %>%
-  mutate(
-    # convert 'weeks' to days post optimum (14 days after second dose) text says
-    # week 1 is 7-13 days, so presumably week 0 is 0-6 days after the 14-day
-    # lag. Compute midpoint in days of other periods accordingly. For 20+ weeks,
-    # assume the midpoint of 20-26 weeks. Data includes events up to 3rd
-    # September 2021, and most vaccinations starting Jan 4 2021 (supp 1), so
-    # subtracting 6 weeks for time to immunity, longest post-vaccination period
-    # could be is ~26 months.
-    days = case_when(
-      weeks == "1" ~ mean(7:13),
-      weeks == "2-9" ~ mean((7*2):(7*10 - 1)),
-      weeks == "10-14" ~ mean((7*10):(7*15 - 1)),
-      weeks == "15-19" ~ mean((7*15):(7*20 - 1)),
-      weeks == "20+" ~ mean((7*20):(7*27 - 1)),
-    ),
-    .after = dose
-  ) %>%
-  select(
-    -weeks
-  )
-
+# VEs against different outcomes for different products and doses, on different
+# days since peak vaccination impact
+ve_estimates <- get_ve_estimates()
 
 # build a greta model to infer mean neuts, c50s, and the slope of the
 # relationship between VEs and neut titres
@@ -112,21 +24,18 @@ products <- unique(ve_estimates$product)
 
 # set up ve data for modelling
 ve_data_modelling <- ve_estimates %>%
-  bind_rows(
-    ve_waning_andrews
-  ) %>%
+  prep_ve_data_for_modelling() %>%
   mutate(
     # get indices to outcomes, products, doses, to pull together predictions
     outcomes_idx = match(outcome, outcomes),
     doses_idx = match(dose, doses),
     product_idx = match(product, products),
-    # logit transform ves to better define likelihood
-    ve_logit = qlogis(ve)
   )
 
 # get index to neut ratios, to ensure they are in the correct order
 neut_ratios_vaccine <- neut_ratios %>%
   filter(product != "infection")
+
 neut_ratio_vaccine_idx <- match(neut_ratios_vaccine$product, products)
 
 # define greta model
@@ -143,8 +52,10 @@ neut_decay <- log(2) / neut_halflife
 # log slope of the logit mapping from neuts to VEs
 log_k <- normal(0, 1)
 
-# observation error on logit VEs
-ve_logit_obs_sd <- normal(0, 1, truncation = c(0, Inf))
+# a shared additional observation error on logit VEs (since uncertainty in
+# estimates doesn't reflect differences in outcome definitions between studies
+# etc.)
+ve_logit_obs_sd_shared <- normal(0, 1, truncation = c(0, Inf))
 
 # c50s for different outcomes
 c50s <- normal(0, 1, dim = 5)
@@ -176,11 +87,13 @@ vaccine_idx <- cbind(
   ve_data_modelling$doses_idx
 )
 
+# expand out the c50 parameters to match the data
 c50_vec <- c50s[ve_data_modelling$outcomes_idx]
+
+# get peak mean log10 neut titres for each vaccine
 peak_mean_log10_neut_vec <- vaccine_peak_mean_log10_neuts_mat[vaccine_idx]
 
-# mean_log10_neut_vec <- peak_mean_log10_neut_vec
-# peak_mean_log10_neut_vec + log10(exp(-neut_decay * ve_data_modelling$days))
+# compute expected values on given days post peak
 mean_log10_neut_vec <- log10_neut_over_time(
   time = ve_data_modelling$days,
   maximum_log10_neut = peak_mean_log10_neut_vec,
@@ -202,14 +115,18 @@ ve_expected <- ve_from_mean_log10_neut(
 # convert to logit scale
 ve_expected_logit <- log(ve_expected / (1 - ve_expected))
 
-# likelihood for VEs on logit scale, to better capture variation on observation standard error
+# get the observation standard deviation for each observation; combining error
+# from both the estimation (known for each estimate) with error between studies
+# in outcome definitions and sample biases etc
+ve_logit_obs_sd <- sqrt(ve_data_modelling$ve_logit_sd ^ 2 + ve_logit_obs_sd_shared ^ 2)
+
+# likelihood for VEs, with observation error given by estimate SD
 distribution(ve_data_modelling$ve_logit) <- normal(ve_expected_logit, ve_logit_obs_sd)
 
 # define and fit model
 m <- model(
   log_k,
   neut_halflife,
-  ve_logit_obs_sd,
   c50s,
   dose_1_mean_log10_neuts,
   dose_2_mean_log10_neuts
@@ -222,39 +139,16 @@ coda::effectiveSize(draws)
 bayesplot::mcmc_trace(draws)
 summary(draws)
 
-# to do:
-
-# add booster and convalescent mean log10 neut variables post-hoc. 5-fold neuts
-# of pfizer dose 2 for booster (add log10(5) to log10 neut) and 0 log10 neuts
-# for convalescent
-
-# arrange products and doses into a vector for easier lookup
-
-# organise the code to make ve predictions based on outcome, product, dose, time
-# since dose etc. (need to add in decay parameter)
-
-# predict to full range of values to plot
-
-# show each as a ribbon (red for AZ, purple for Pfizer, grey for infection) of
-#   CIs
-# show the number of doses by the darkness of the colours
-# add dots for the assumed initial VEs from the parameters doc, and show the
-#   Andrews waning data, with bars
-
-# then do TP reductions
-
-
-ve_expected_sims <- calculate(ve_expected, values = draws, nsim = 1000)[[1]][, , 1]
-ve_predictions <- colMeans(ve_expected_sims)
-ve_predictions_quants <- apply(ve_expected_sims, 2, quantile, c(0.025, 0.975))
-
-
 # compare observed and predicted VEs
+ve_fitted_sims <- calculate(ve_expected, values = draws, nsim = 1000)[[1]][, , 1]
+ve_fitted <- colMeans(ve_fitted_sims)
+ve_fitted_quants <- apply(ve_fitted_sims, 2, quantile, c(0.025, 0.975))
+
 ve_data_modelling %>%
   mutate(
-    predicted_ve = ve_predictions,
-    predicted_ve_lower = ve_predictions_quants[1, ],
-    predicted_ve_upper = ve_predictions_quants[2, ],
+    predicted_ve = ve_fitted,
+    predicted_ve_lower = ve_fitted_quants[1, ],
+    predicted_ve_upper = ve_fitted_quants[2, ],
     .after = ve
   ) %>%
   mutate(
@@ -275,7 +169,13 @@ ve_data_modelling %>%
   geom_errorbar(
     aes(
       ymin = predicted_ve_lower,
-      ymax = predicted_ve_upper,
+      ymax = predicted_ve_upper
+    )
+  ) +
+  geom_errorbar(
+    aes(
+      xmin = ve_lower,
+      xmax = ve_upper
     )
   ) +
   geom_abline(
@@ -285,96 +185,204 @@ ve_data_modelling %>%
   theme_minimal()
 
 # posterior predictive check on ECDF of observed VEs
-bayesplot::ppc_ecdf_overlay(ve_data_modelling$ve, ve_expected_sims)
+bayesplot::ppc_ecdf_overlay(ve_data_modelling$ve, ve_fitted_sims)
+
+log10_booster_multipler <- log10(5)
+
+# prepare for prediction
+log10_neuts_list <- list(
+  az_dose_1 = dose_1_mean_log10_neuts[products == "AZ"],
+  az_dose_2 = dose_2_mean_log10_neuts[products == "AZ"],
+  pfizer_dose_1 = dose_1_mean_log10_neuts[products == "Pfizer"],
+  pfizer_dose_2 = dose_2_mean_log10_neuts[products == "Pfizer"],
+  booster = dose_2_mean_log10_neuts[products == "Pfizer"] + log10_booster_multipler,
+  infection = 0
+)
+
+immunities <- names(log10_neuts_list)
+peak_mean_log10_neuts_all <- do.call(c, log10_neuts_list)
+
+# create a table of all the outcomes, immunity types, and days post dose, to compute the VEs
+ve_prediction_data <- expand_grid(
+  outcome = outcomes,
+  immunity = immunities,
+  days = 0:365
+) %>%
+  mutate(
+    outcome_idx = match(outcome, outcomes),
+    immunity_idx = match(immunity, immunities)
+  )
+
+mean_log10_neuts_all <- log10_neut_over_time(
+  time = ve_prediction_data$days,
+  maximum_log10_neut = peak_mean_log10_neuts_all[ve_prediction_data$immunity_idx],
+  decay = neut_decay
+)
+
+# predict VEs
+ve_predict <- ve_from_mean_log10_neut(
+  mean_log10_neut_vec = mean_log10_neuts_all,
+  c50_vec = c50s[ve_prediction_data$outcome_idx],
+  log_k = log_k,
+  sd_log10_neut = sd_log10_neut_titres,
+  method = "gaussian"
+)
+
+ve_predict_sims <- calculate(ve_predict,
+                             values = draws,
+                             nsim = 1000)[[1]][, , 1]
+
+ve_predictions <- ve_prediction_data %>%
+  mutate(
+    ve_predict_mean = colMeans(ve_predict_sims),
+    ve_predict_sd = apply(ve_predict_sims, 2, stats::sd),
+    ve_predict_lower_50 = apply(ve_predict_sims, 2, quantile, 0.25),
+    ve_predict_upper_50 = apply(ve_predict_sims, 2, quantile, 0.75),
+    ve_predict_lower_90 = apply(ve_predict_sims, 2, quantile, 0.05),
+    ve_predict_upper_90 = apply(ve_predict_sims, 2, quantile, 0.95)
+  ) %>%
+  mutate(
+    immunity_type = case_when(
+      immunity == "az_dose_2" ~ "AZ vaccine dose 2",
+      immunity == "az_dose_1" ~ "AZ vaccine dose 1",
+      immunity == "pfizer_dose_2" ~ "Pfizer vaccine dose 2",
+      immunity == "pfizer_dose_1" ~ "Pfizer vaccine dose 1",
+      immunity == "booster" ~ "mRNA booster",
+      immunity == "infection" ~ "Infection"
+    )
+  )
+
+write_csv(
+  ve_predictions,
+  "outputs/ve_waning_predictions.csv"
+)
+
+ve_data_plotting <- ve_data_modelling %>%
+  mutate(
+    `Type of immunity` = case_when(
+      product == "AZ" & dose == 2 ~ "AZ vaccine dose 2",
+      product == "AZ" & dose == 1 ~ "AZ vaccine dose 1",
+      product == "Pfizer" & dose == 2 ~ "Pfizer vaccine dose 2",
+      product == "Pfizer" & dose == 1 ~ "Pfizer vaccine dose 1"
+    )
+  ) %>%
+  mutate(
+    outcome = str_to_sentence(outcome),
+    outcome = factor(
+      outcome,
+      levels = c(
+        "Death",
+        "Hospitalisation",
+        "Symptoms",
+        "Acquisition",
+        "Transmission"
+      )
+    )
+  )
+
+ve_predictions %>%
+  mutate(
+    outcome = str_to_sentence(outcome),
+    outcome = factor(
+      outcome,
+      levels = c(
+        "Death",
+        "Hospitalisation",
+        "Symptoms",
+        "Acquisition",
+        "Transmission"
+      )
+    ),
+    immunity_type = factor(
+      immunity_type,
+      levels = c(
+        "mRNA booster",
+        "Pfizer vaccine dose 2",
+        "Pfizer vaccine dose 1",
+        "AZ vaccine dose 2",
+        "AZ vaccine dose 1",
+        "Infection"
+      )
+    )
+  ) %>%
+  rename(
+    `Type of immunity` = immunity_type
+  ) %>%
+  ggplot(
+    aes(
+      x = days,
+      fill = `Type of immunity`
+    )
+  ) +
+  facet_wrap(~outcome) +
+  geom_ribbon(
+    aes(
+      ymin = ve_predict_lower_50,
+      ymax = ve_predict_upper_50
+    ),
+    size = 0.25,
+    colour = grey(0.4)
+  ) +
+  geom_errorbarh(
+    aes(
+      xmin = days_earliest,
+      xmax = days_latest,
+      y = ve
+    ),
+    height = 0,
+    alpha = 0.5,
+    data = ve_data_plotting
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = ve_lower,
+      ymax = ve_upper,
+      x = days
+    ),
+    width = 0,
+    alpha = 0.5,
+    data = ve_data_plotting
+  ) +
+  geom_point(
+    aes(
+      y = ve
+    ),
+    shape = 21,
+    data = ve_data_plotting
+  ) +
+  scale_y_continuous(
+    labels = scales::percent
+  ) +
+  scale_fill_manual(
+    values = c(
+      "mRNA booster" = lighten("darkorchid4", 0.1),
+      "Pfizer vaccine dose 2" = lighten("darkorchid1", 0.1),
+      "Infection" = grey(0.8),
+      "AZ vaccine dose 2" = lighten("firebrick1", 0.1),
+      "Pfizer vaccine dose 1" = lighten("darkorchid1", 0.8),
+      "AZ vaccine dose 1" = lighten("firebrick1", 0.8)
+    )
+  ) +
+  scale_alpha_manual(
+    values = c("two doses" = 0.8, "one dose" = 0.1)
+  ) +
+  ylab("Efficacy against Delta variant") +
+  xlab("Days since vaccination") +
+  ggtitle("Population average protection against negative outcomes") +
+  theme_minimal()
+
+ggsave("figures/ve_waning.png",
+       width = 10,
+       height = 6,
+       bg = "white")
 
 
+# to do:
 
+# add ve estimate uncertainty to the plot
 
+# add a hierarchical structure over independent log_ks for outcomes
 
+# do TP reductions
 
-#
-# # create a table of all the outcomes, products, doses, and days post dose and the corresponding VEs
-# # later: add in lag to initial immunity
-# ve_predictions <- expand_grid(
-#   outcome = unique(ve_estimates$outcome),
-#   product = unique(ve_estimates$product),
-#   dose = 3:1,
-#   days = 0:365
-# ) %>%
-#   # remove the dose 3 AZ entry, since it doesn't exist
-#   filter(
-#     !(product == "AZ" & dose == 3)
-#   ) %>%
-#   left_join(
-#     optimal_log10_neuts,
-#     by = c("product", "dose")
-#   ) %>%
-#   left_join(
-#     c50_estimates,
-#     by = "outcome"
-#   ) %>%
-#   mutate(
-#     current_log10_neut = log10_neut_over_time(
-#       time = days,
-#       maximum_log10_neut = optimal_log10_neut,
-#       decay = decay_rate_estimate$neut_decay_rate
-#     )
-#   ) %>%
-#   rowwise() %>%
-#   mutate(
-#     ve = ve_from_mean_log10_neut(
-#       mean_log10_neut = current_log10_neut,
-#       sd_log10_neut = sd_log10_neut_titres,
-#       log_k = log_k,
-#       c50 = c50
-#     )
-#   ) %>%
-#   ungroup() %>%
-#   select(
-#     -optimal_log10_neut,
-#     -c50,
-#     -current_log10_neut
-#   )
-#
-# write_csv(
-#   ve_predictions,
-#   "outputs/ve_waning_predictions.csv"
-# )
-#
-# ve_predictions %>%
-#   mutate(
-#     dose = factor(
-#       dose,
-#       levels = 3:1
-#     ),
-#     outcome = factor(
-#       outcome,
-#       levels = c(
-#         "death",
-#         "hospitalisation",
-#         "symptoms",
-#         "acquisition",
-#         "transmission"
-#       )
-#     )
-#   ) %>%
-#   ggplot(
-#     aes(
-#       x = days,
-#       y = ve,
-#       colour = product,
-#       linetype = dose
-#     )
-#   ) +
-#   facet_wrap(~outcome) +
-#   ylab("Vaccine efficacy") +
-#   xlab("Days since vaccination") +
-#   geom_line() +
-#   scale_y_continuous(labels = scales::percent) +
-#   theme_minimal()
-#
-# ggsave("figures/ve_waning.png",
-#        width = 9,
-#        height = 6,
-#        bg = "white")
-
+# look at implementing waning

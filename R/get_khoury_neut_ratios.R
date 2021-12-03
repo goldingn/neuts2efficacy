@@ -9,7 +9,10 @@
 #' @export
 get_khoury_neut_ratios <- function(khoury_natmed_estimates) {
 
-  khoury_natmed_estimates %>%
+  khoury_natmed_file <- "data/SummaryTable_Efficacy_NeutRatio_SD_SEM.RDS"
+
+  khoury_natmed_file %>%
+    readRDS() %>%
     filter(
       Study %in% c("AstraZeneca", "Pfizer", "Convalescence")
     ) %>%
