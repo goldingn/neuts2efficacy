@@ -15,7 +15,10 @@ neut_ratios_vaccine <- get_neut_ratios_vaccine()
 ve_estimates <- get_ve_estimates()
 
 # build a greta model of relationship between neuts and efficacies
-neut_model <- build_neut_model(ve_estimates, neut_ratios_vaccine)
+neut_model_initial <- build_neut_model(ve_estimates, neut_ratios_vaccine)
+
+# extend the model to add omicron parameters
+neut_model <- add_omicron_model(neut_model_initial)
 
 # fit model by MCMC and check convergence
 draws <- fit(neut_model)
