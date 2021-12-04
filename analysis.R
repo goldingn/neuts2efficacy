@@ -66,6 +66,87 @@ ggsave("figures/ve_waning.png",
        height = 6,
        bg = "white")
 
+
+# plot posterior density of R0 and immune escape
+
+params <- tibble(
+  R0 = calculate(
+    6 * neut_model$model_objects$R0_ratio,
+    values = draws,
+    nsim = 1000
+  )[[1]][, 1, 1],
+  immune_escape_titre_fold = calculate(
+    -neut_model$model_objects$omicron_log10_neut_fold,
+    values = draws,
+    nsim = 1000
+  )[[1]][, 1, 1]
+)
+
+H <- matrix(c(0.4, -0.1, -0.1, 13), 2, 2)
+kd <- ks::kde(params, H = H, compute.cont = TRUE)
+
+contour_95 <- with(
+  kd,
+  contourLines(
+    x = eval.points[[1]],
+    y = eval.points[[2]],
+    z = estimate,
+    levels = cont["5%"]
+  )[[1]]
+)
+
+contour_50 <- with(
+  kd,
+  contourLines(
+    x = eval.points[[1]],
+    y = eval.points[[2]],
+    z = estimate,
+    levels = cont["50%"]
+  )[[1]]
+)
+
+contour_95 <- data.frame(contour_95)
+contour_50 <- data.frame(contour_50)
+
+params %>%
+  ggplot(
+    aes(
+      x = R0,
+      y = immune_escape_titre_fold
+    )
+  ) +
+  geom_path(
+    aes(x, y),
+    data = contour_95
+  ) +
+  geom_path(
+    aes(x, y),
+    data = contour_50
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 25, by = 5),
+    labels = 10 ^ seq(0, 25, by = 5)
+  ) +
+  coord_cartesian(
+    xlim = c(0, 9)
+  ) +
+  geom_vline(
+    xintercept = 6,
+    linetype = 2
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 2
+  ) +
+  ggtitle("Immune escape and R0 of Omicron vs. Delta") +
+  ylab("log10 fold of neutralising antibody titre") +
+  theme_minimal()
+
+ggsave("figures/contours.png",
+       width = 6,
+       height = 4,
+       bg = "white")
+
 # to do:
 
 # do TP reductions
