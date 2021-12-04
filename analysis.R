@@ -67,5 +67,7 @@ ggsave("figures/ve_waning.png",
 
 # do TP reductions
 
-# evaluate prediction of VEs to new variants (especially immune escape variants),
-# based on variant neut titres
+# add data for variants as neut titre fold of WT, to predict to Delta with C50s
+
+# evaluate prediction of VEs to new variants (alpha, beta) based on variant neut
+# titres

@@ -10,7 +10,6 @@
 #' @export
 plot_waning <- function(ve_predictions, ve_data_modelling) {
 
-
   ve_data_plotting <- ve_data_modelling %>%
     mutate(
       `Type of immunity` = case_when(
@@ -125,7 +124,7 @@ plot_waning <- function(ve_predictions, ve_data_modelling) {
       xlim = c(0, 200)
     ) +
     ylab("Efficacy") +
-    xlab("Days since vaccination") +
+    xlab("Days since peak immunity") +
     ggtitle("Predicted waning in vaccine efficacy",
             "against the Delta variant") +
     theme_minimal()
