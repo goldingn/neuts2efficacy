@@ -9,14 +9,14 @@
 #' @export
 get_neut_ratios_vaccine <- function() {
 
-  khoury_natmed_url <- "https://github.com/InfectionAnalytics/COVID19-ProtectiveThreshold/raw/main/Comparing%20Severe%20vs%20Mild%20Infection/SummaryTable_Efficacy_NeutRatio_SD_SEM.csv"
-  khoury_natmed_file <- "data/SummaryTable_Efficacy_NeutRatio_SD_SEM.csv"
+  cromer_url <- "https://github.com/InfectionAnalytics/SARS-CoV-2-Variants-and-Boosting---Lancet-Microbe/raw/main/Figure2-4andS4/SummaryTable_Efficacy_NeutRatio_SD_SEM.csv"
+  cromer_file <- "data/SummaryTable_Efficacy_NeutRatio_SD_SEM_cromer.csv"
 
-  if (!file.exists(khoury_natmed_file)) {
-    download.file(khoury_natmed_url, khoury_natmed_file)
+  if (!file.exists(cromer_file)) {
+    download.file(cromer_url, cromer_file)
   }
 
-  khoury_natmed_file %>%
+  cromer_file %>%
     read_csv(
       col_types = cols(
         .default = col_skip(),
@@ -28,11 +28,11 @@ get_neut_ratios_vaccine <- function() {
       )
     ) %>%
     filter(
-      Study %in% c("Astra", "Pfizer", "Convalescence")
+      Study %in% c("AstraZeneca", "Pfizer", "Convalescence")
     ) %>%
     mutate(
       Study = case_when(
-        Study == "Astra" ~ "AZ",
+        Study == "AstraZeneca" ~ "AZ",
         Study == "Pfizer" ~ "Pfizer",
         Study == "Convalescence" ~ "infection"
       )
