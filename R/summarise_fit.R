@@ -14,6 +14,7 @@ summarise_fit <- function(draws) {
   summaries <- summary(draws)
 
   tibble(
+    parameter = names(neffs),
     mean = summaries$statistics[, "Mean"],
     sd = summaries$statistics[, "SD"],
     lower_95_ci = summaries$quantiles[, "2.5%"],
