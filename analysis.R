@@ -69,59 +69,27 @@ ggsave("figures/ve_waning.png",
 
 # plot posterior density of R0 and immune escape
 
-params <- tibble(
-  R0 = calculate(
-    6 * neut_model$model_objects$R0_ratio,
-    values = draws,
-    nsim = 1000
-  )[[1]][, 1, 1],
-  immune_escape_titre_fold = calculate(
-    -neut_model$model_objects$omicron_log10_neut_fold,
-    values = draws,
-    nsim = 1000
-  )[[1]][, 1, 1]
-)
 
-H <- matrix(c(0.4, -0.1, -0.1, 13), 2, 2)
-kd <- ks::kde(params, H = H, compute.cont = TRUE)
-
-contour_95 <- with(
-  kd,
-  contourLines(
-    x = eval.points[[1]],
-    y = eval.points[[2]],
-    z = estimate,
-    levels = cont["5%"]
-  )[[1]]
-)
-
-contour_50 <- with(
-  kd,
-  contourLines(
-    x = eval.points[[1]],
-    y = eval.points[[2]],
-    z = estimate,
-    levels = cont["50%"]
-  )[[1]]
-)
-
-contour_95 <- data.frame(contour_95)
-contour_50 <- data.frame(contour_50)
+# get posteriors over these and construct a KDE
+omicron_params <- sim_omicron_params(neut_model, draws)
+omicron_kde <- fit_kde(omicron_params)
 
 params %>%
   ggplot(
     aes(
       x = R0,
-      y = immune_escape_titre_fold
+      y = titre_fold
     )
   ) +
-  geom_path(
+  geom_polygon(
     aes(x, y),
-    data = contour_95
+    data = get_kde_contour(omicron_kde, 0.95),
+    fill = lighten("seagreen", 0.6)
   ) +
-  geom_path(
+  geom_polygon(
     aes(x, y),
-    data = contour_50
+    data = get_kde_contour(omicron_kde, 0.5),
+    fill = lighten("seagreen", 0.1)
   ) +
   scale_y_continuous(
     breaks = seq(0, 25, by = 5),
@@ -148,6 +116,9 @@ ggsave("figures/contours.png",
        bg = "white")
 
 # to do:
+
+# express escape as % evasion of immunity, not as fold titre
+# VEs for transmission?
 
 # do TP reductions
 
