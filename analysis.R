@@ -73,35 +73,73 @@ ggsave("figures/ve_waning.png",
 
 # get posteriors over these and construct a KDE
 omicron_params <- sim_omicron_params(neut_model, draws)
-omicron_kde <- omicron_params %>%
+
+# plot in LHSTM style
+omicron_kde_lshtm <- omicron_params %>%
   relocate(
     immune_evasion,
-    .after = R0
+    R0_ratio,
+    .before = everything()
   ) %>%
   fit_kde()
 
-omicron_params %>%
-  ggplot() +
+omicron_params_lshtm_style <- ggplot() +
   geom_polygon(
     aes(x, y),
-    data = get_kde_contour(omicron_kde, 0.95),
+    data = get_kde_contour(omicron_kde_lshtm, 0.95),
     fill = lighten("seagreen", 0.6)
   ) +
   geom_polygon(
     aes(x, y),
-    data = get_kde_contour(omicron_kde, 0.5),
+    data = get_kde_contour(omicron_kde_lshtm, 0.5),
     fill = lighten("seagreen", 0.1)
   ) +
-  # scale_y_continuous(
-  #   breaks = seq(0, 5, by = 1),
-  #   labels = 10 ^ seq(0, 25, by = 5)
-  # ) +
-  # scale_y_continuous(
-  #   labels = scales::percent
-  # ) +
-  coord_cartesian(
-    xlim = c(0, 9),
-    # ylim = c(0, 1)
+  scale_x_continuous(
+    labels = scales::percent
+  ) +
+  geom_hline(
+    yintercept = 1,
+    linetype = 2
+  ) +
+  geom_vline(
+    xintercept = 0,
+    linetype = 2
+  ) +
+  ggtitle("Immune escape and relative transmissibility of Omicron vs. Delta") +
+  xlab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
+  ylab("Omicron relative transmissibility (R0 ratio)") +
+  theme_minimal()
+
+ggsave("figures/omicron_params_lshtm_style.png",
+       plot = omicron_params_lshtm_style,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+
+omicron_kde_bedford <- omicron_params %>%
+  relocate(
+    R0,
+    immune_evasion,
+    .before = everything()
+  ) %>%
+  fit_kde(
+    smooth = c(1.8, 0.3)
+  )
+
+omicron_params_bedford_style <- ggplot() +
+  geom_polygon(
+    aes(x, y),
+    data = get_kde_contour(omicron_kde_bedford, 0.95),
+    fill = lighten("seagreen", 0.6)
+  ) +
+  geom_polygon(
+    aes(x, y),
+    data = get_kde_contour(omicron_kde_bedford, 0.5),
+    fill = lighten("seagreen", 0.1)
+  ) +
+  scale_y_continuous(
+    labels = scales::percent
   ) +
   geom_vline(
     xintercept = 6,
@@ -111,26 +149,22 @@ omicron_params %>%
     yintercept = 0,
     linetype = 2
   ) +
-  ggtitle("Immune escape and R0 of Omicron vs. Delta") +
-  xlab("R0") +
-  # ylab("fold reduction in neutralising antibody titre") +
+  coord_cartesian(
+    xlim = c(1, 12)
+  ) +
+  ggtitle("Inferred immune escape and relative transmissibility of Omicron vs. Delta") +
+  xlab("Omicron transmissibility (R0)") +
+  ylab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
   theme_minimal()
 
-ggsave("figures/contours.png",
-       width = 6,
-       height = 4,
+ggsave("figures/omicron_params_bedford_style.png",
+       plot = omicron_params_bedford_style,
+       width = 7,
+       height = 7,
        bg = "white")
 
+
 # to do:
-
-
-
-# express escape as % evasion of immunity, not as fold titre
-# VEs for transmission? But bimodal...
-
-# try tighter prior to constrain degree of immune escape
-
-# try running with tighter Reff ratio
 
 # do TP reductions
 

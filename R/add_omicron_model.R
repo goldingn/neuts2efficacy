@@ -111,9 +111,25 @@ add_omicron_model <- function(neut_model) {
   # R0_ratio  = R0_omicron / R0_delta
   # ve_multiplier_ratio = (1 - ve_omicron) / (1 - ve_delta)
 
-  immune_multiplier_omicron = fraction_immune * omicron_vaccine_reduction + (1 - fraction_immune)
-  immune_multiplier_delta = fraction_immune * delta_vaccine_reduction + (1 - fraction_immune)
+  # compute ascertainment reduction and transmission reduction separately and
+  # combine, to mimic NGM approach
+  fraction_nonimmune <- 1 - fraction_immune
+
+  transmission_multiplier_omicron <- fraction_immune * (1 - omicron_ves[c(transmission_idx)]) + fraction_nonimmune
+  acquisition_multiplier_omicron <- fraction_immune * (1 - omicron_ves[c(acquisition_idx)]) + fraction_nonimmune
+
+  transmission_multiplier_delta <- fraction_immune * (1 - delta_ves[c(transmission_idx)]) + fraction_nonimmune
+  acquisition_multiplier_delta <- fraction_immune * (1 - delta_ves[c(acquisition_idx)]) + fraction_nonimmune
+
+
+  # get multiplier on probability of transmission per contact between an
+  # infected person and an uninfected person (identical to ratio of NGM
+  # eigenvalues in homogenously mixing population)
+  immune_multiplier_omicron = transmission_multiplier_omicron * acquisition_multiplier_omicron
+  immune_multiplier_delta = transmission_multiplier_delta * acquisition_multiplier_delta
+
   immune_multiplier_ratio <- immune_multiplier_omicron / immune_multiplier_delta
+
   expected_reff_ratio <- R0_ratio * immune_multiplier_ratio
 
   # define likelihood on ratio of Reff between Omicron and Delta
@@ -122,7 +138,7 @@ add_omicron_model <- function(neut_model) {
   # https://twitter.com/cap1024/status/1466840869852651529
   # https://drive.google.com/file/d/1hA6Mec2Gq3LGqTEOj35RqSeAb_SmXpbI/view
   # match most recent 95% CI
-  reff_ratio_bounds <- c(1.4, 3.2)
+  reff_ratio_bounds <- c(2, 2.7)
   reff_ratio_estimate <- mean(reff_ratio_bounds)
   reff_ratio_sd <- mean(abs(reff_ratio_bounds - reff_ratio_estimate)) / 1.96
   distribution(reff_ratio_estimate) <- normal(expected_reff_ratio, reff_ratio_sd)
@@ -136,7 +152,7 @@ add_omicron_model <- function(neut_model) {
   # assume these estimates have low uncertainty, conditional on the model
   # parameters (we have a ratio parameter for uncertainty due to
   # misspecification)
-  reinfection_log_hazard_ratio_sd <- 0.01
+  reinfection_log_hazard_ratio_sd <- 0.25
 
   omicron_expected_log_hazard_ratio <- log(1 - omicron_ves[symptoms_idx]) + reinfection_correction
   delta_expected_log_hazard_ratio <- log(1 - delta_ves[symptoms_idx]) + reinfection_correction
