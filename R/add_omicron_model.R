@@ -16,6 +16,9 @@ add_omicron_model <- function(neut_model) {
   # define parameter for ratio of R0s (omicron / delta) with mode of 1
   R0_ratio <- normal(1, 1, truncation = c(0, Inf))
 
+  # parameter for fraction with some immunity (frrom prior infection and/or vaccination)
+  fraction_immune <- normal(0.8, 0.05, truncation = c(0, 1))
+
   # correction factor for biases in the reinfection log hazard ratio -
   # informative prior to get the Delta wave reinfection hazard ratio in the same
   # ballpark as waned vaccine against symptomatic disease (AZ - Pfizer VEs 50 & 75% from
@@ -86,23 +89,32 @@ add_omicron_model <- function(neut_model) {
   # define likelihood on ratio of Reffs between Omicron and Delta in same
   # period, with expectation of:
 
-  # Reff_delta  =  R0_delta * (1 - ve_delta) * fraction_with_immunity * other_reductions
-  # Reff_omicron  =  R0_omicron * (1 - ve_omicron) * fraction_with_immunity * other_reductions
+  # immune_multiplier = fraction_immune * (1 - ve) + (1 - fraction_immune)
+  # immune_multiplier_omicron = fraction_immune * (1 - ve_omicron) + (1 - fraction_immune)
+  # immune_multiplier_delta = fraction_immune * (1 - ve_delta) + (1 - fraction_immune)
+
+  # immune_multiplier_ratio = immune_multiplier_omicron / immune_multiplier_delta
+
+  # Reff_omicron  =  R0_omicron * other_reductions * immune_multiplier_omicron
+  # Reff_delta  =  R0_delta * other_reductions * immune_multiplier_delta
 
   # other reductions and fraction with immunity apply equally to both (assuming
   # GI  etc. the same), so:
 
   # Reff_ratio = Reff_omicron / Reff_delta
-  #            = (R0_omicron * (1 - ve_omicron)) / (R0_delta * (1 - ve_delta))
-  #            = (R0_omicron / R0_delta) * ((1 - ve_omicron) / (1 - ve_delta))
-  #            = R0_ratio * ve_multiplier_ratio
+  #            = (R0_omicron * other_reductions * immune_multiplier_omicron) / (R0_delta * other_reductions * immune_multiplier_delta)
+  #            = (R0_omicron * immune_multiplier_omicron) / (R0_delta * immune_multiplier_delta)
+  #            = (R0_omicron / R0_delta) * (immune_multiplier_omicron / immune_multiplier_delta)
+  #            = R0_ratio * immune_multiplier_ratio
 
   # where:
   # R0_ratio  = R0_omicron / R0_delta
   # ve_multiplier_ratio = (1 - ve_omicron) / (1 - ve_delta)
 
-  ve_multiplier_ratio <- omicron_vaccine_reduction / delta_vaccine_reduction
-  expected_reff_ratio <- R0_ratio * ve_multiplier_ratio
+  immune_multiplier_omicron = fraction_immune * omicron_vaccine_reduction + (1 - fraction_immune)
+  immune_multiplier_delta = fraction_immune * delta_vaccine_reduction + (1 - fraction_immune)
+  immune_multiplier_ratio <- immune_multiplier_omicron / immune_multiplier_delta
+  expected_reff_ratio <- R0_ratio * immune_multiplier_ratio
 
   # define likelihood on ratio of Reff between Omicron and Delta
 
@@ -136,6 +148,7 @@ add_omicron_model <- function(neut_model) {
   new_traced <- module(
     omicron_log10_neut_fold,
     R0_ratio,
+    fraction_immune,
     za_waning_days,
     reinfection_correction,
     omicron_vaccine_reduction,

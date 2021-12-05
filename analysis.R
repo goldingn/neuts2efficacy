@@ -23,7 +23,8 @@ neut_model <- add_omicron_model(neut_model_initial)
 # fit model by MCMC and check convergence
 draws <- fit(neut_model)
 
-summarise_fit(draws)
+summarise_fit(draws) %>%
+  print(n = Inf)
 
 trace_plot <- bayesplot::mcmc_trace(draws)
 ggsave("figures/mcmc_trace.png",
@@ -121,23 +122,6 @@ ggsave("figures/contours.png",
        bg = "white")
 
 # to do:
-
-# (why) does the population immune fraction dispapear in my model? does it make
-# sense to multiply the overall VE for trransmission against this? this
-# ignores mixing and the probability that a transmission event occurs?
-
-# if there is no population immunity, the immune escape is irrelevant, so it
-# must be explained by R0
-
-# if there is full population immunity, the immune escape is a strong effect, so
-# it is explained by both
-
-R = R0 * behavioural_reduction * p_immune * ve_immmunity
-
-# is it linear like this?
-(p_immune * reduction_in_transmission_if_immune) + (1 - p_immune) * 1
-
-immunity_effect <- (p_immune * reduction_in_transmission_if_immune + (1 - p_immune))
 
 
 
