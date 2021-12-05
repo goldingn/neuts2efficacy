@@ -72,15 +72,15 @@ ggsave("figures/ve_waning.png",
 
 # get posteriors over these and construct a KDE
 omicron_params <- sim_omicron_params(neut_model, draws)
-omicron_kde <- fit_kde(omicron_params)
+omicron_kde <- omicron_params %>%
+  relocate(
+    immune_evasion,
+    .after = R0
+  ) %>%
+  fit_kde()
 
-params %>%
-  ggplot(
-    aes(
-      x = R0,
-      y = titre_fold
-    )
-  ) +
+omicron_params %>%
+  ggplot() +
   geom_polygon(
     aes(x, y),
     data = get_kde_contour(omicron_kde, 0.95),
@@ -91,12 +91,16 @@ params %>%
     data = get_kde_contour(omicron_kde, 0.5),
     fill = lighten("seagreen", 0.1)
   ) +
-  scale_y_continuous(
-    breaks = seq(0, 25, by = 5),
-    labels = 10 ^ seq(0, 25, by = 5)
-  ) +
+  # scale_y_continuous(
+  #   breaks = seq(0, 5, by = 1),
+  #   labels = 10 ^ seq(0, 25, by = 5)
+  # ) +
+  # scale_y_continuous(
+  #   labels = scales::percent
+  # ) +
   coord_cartesian(
-    xlim = c(0, 9)
+    xlim = c(0, 9),
+    # ylim = c(0, 1)
   ) +
   geom_vline(
     xintercept = 6,
@@ -107,7 +111,8 @@ params %>%
     linetype = 2
   ) +
   ggtitle("Immune escape and R0 of Omicron vs. Delta") +
-  ylab("log10 fold of neutralising antibody titre") +
+  xlab("R0") +
+  # ylab("fold reduction in neutralising antibody titre") +
   theme_minimal()
 
 ggsave("figures/contours.png",
@@ -117,8 +122,31 @@ ggsave("figures/contours.png",
 
 # to do:
 
+# (why) does the population immune fraction dispapear in my model? does it make
+# sense to multiply the overall VE for trransmission against this? this
+# ignores mixing and the probability that a transmission event occurs?
+
+# if there is no population immunity, the immune escape is irrelevant, so it
+# must be explained by R0
+
+# if there is full population immunity, the immune escape is a strong effect, so
+# it is explained by both
+
+R = R0 * behavioural_reduction * p_immune * ve_immmunity
+
+# is it linear like this?
+(p_immune * reduction_in_transmission_if_immune) + (1 - p_immune) * 1
+
+immunity_effect <- (p_immune * reduction_in_transmission_if_immune + (1 - p_immune))
+
+
+
 # express escape as % evasion of immunity, not as fold titre
-# VEs for transmission?
+# VEs for transmission? But bimodal...
+
+# try tighter prior to constrain degree of immune escape
+
+# try running with tighter Reff ratio
 
 # do TP reductions
 
