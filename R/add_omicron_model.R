@@ -11,7 +11,7 @@
 add_omicron_model <- function(neut_model) {
 
   # define parameter for fold of neuts relative to main model. Expect this to be negative (less effect)
-  omicron_log10_neut_fold <- normal(0, 10)
+  omicron_log10_neut_fold <- normal(0, 1)
 
   # define parameter for ratio of R0s (omicron / delta) with mode of 1
   R0_ratio <- normal(1, 1, truncation = c(0, Inf))
@@ -113,7 +113,6 @@ add_omicron_model <- function(neut_model) {
   reff_ratio_bounds <- c(1.4, 3.2)
   reff_ratio_estimate <- mean(reff_ratio_bounds)
   reff_ratio_sd <- mean(abs(reff_ratio_bounds - reff_ratio_estimate)) / 1.96
-
   distribution(reff_ratio_estimate) <- normal(expected_reff_ratio, reff_ratio_sd)
 
   # define likelihood on reinfection hazard ratios with expectation of VE for
@@ -122,12 +121,10 @@ add_omicron_model <- function(neut_model) {
   # for Delta seems very low, compared with VEs).
   reinfection_log_hazard_ratio_omicron <- log(0.3)
   reinfection_log_hazard_ratio_delta <- log(0.1)
-  # set the observation SD such that there is a 1 in 1000 chance that the reinfection difference is completely spurious and there's no real difference
-  reinfection_log_hazard_ratio_sd <- 0.01  #(reinfection_log_hazard_ratio_omicron - reinfection_log_hazard_ratio_delta) / qnorm(1 - 1 / 1000)
-  # 1 / (1 - pnorm(reinfection_log_hazard_ratio_omicron, reinfection_log_hazard_ratio_delta, reinfection_log_hazard_ratio_sd))
-  # x <- rnorm(1e5, reinfection_log_hazard_ratio_omicron, reinfection_log_hazard_ratio_sd)
-  # hist(x, breaks = 100, xlim = c(reinfection_log_hazard_ratio_delta, max(x)))
-  # abline(v = c(reinfection_log_hazard_ratio_omicron, reinfection_log_hazard_ratio_delta))
+  # assume these estimates have low uncertainty, conditional on the model
+  # parameters (we have a ratio parameter for uncertainty due to
+  # misspecification)
+  reinfection_log_hazard_ratio_sd <- 0.01
 
   omicron_expected_log_hazard_ratio <- log(1 - omicron_ves[symptoms_idx]) + reinfection_correction
   delta_expected_log_hazard_ratio <- log(1 - delta_ves[symptoms_idx]) + reinfection_correction
