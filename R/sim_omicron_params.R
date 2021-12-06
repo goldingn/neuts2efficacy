@@ -14,10 +14,11 @@ sim_omicron_params <- function(neut_model, draws, n = 1e4) {
   # recompute VEs against transmission for Omicron and Delta, to remove the
   # effect of waning
 
+  za_baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold
   omicron_log10_neut_fold <- neut_model$model_objects$omicron_log10_neut_fold
 
   omicron_ves_peak <- ve_from_mean_log10_neut(
-    mean_log10_neut_vec = rep(omicron_log10_neut_fold, 5),
+    mean_log10_neut_vec = rep(za_baseline_immunity_log10_neut_fold + omicron_log10_neut_fold, 5),
     sd_log10_neut = neut_model$model_objects$sd_log10_neut_titres,
     log_k = neut_model$model_objects$log_k,
     c50_vec = neut_model$model_objects$c50s,
@@ -25,7 +26,7 @@ sim_omicron_params <- function(neut_model, draws, n = 1e4) {
   )
 
   delta_ves_peak <- ve_from_mean_log10_neut(
-    mean_log10_neut_vec = as.matrix(rep(0, 5)),
+    mean_log10_neut_vec = rep(za_baseline_immunity_log10_neut_fold, 5),
     sd_log10_neut = neut_model$model_objects$sd_log10_neut_titres,
     log_k = neut_model$model_objects$log_k,
     c50_vec = neut_model$model_objects$c50s,

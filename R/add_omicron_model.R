@@ -19,6 +19,11 @@ add_omicron_model <- function(neut_model) {
   # parameter for fraction with some immunity (frrom prior infection and/or vaccination)
   fraction_immune <- normal(0.8, 0.05, truncation = c(0, 1))
 
+  # parameters for the increase in neut fold of average immune people in ZA, to
+  # account for the potential boosting effect of large waves of different
+  # variants (WT, beta, delta) and vaccination
+  za_baseline_immunity_log10_neut_fold <- normal(0, 1, truncation = c(0, Inf))
+
   # correction factor for biases in the reinfection log hazard ratio -
   # informative prior to get the Delta wave reinfection hazard ratio in the same
   # ballpark as waned vaccine against symptomatic disease (AZ - Pfizer VEs 50 & 75% from
@@ -49,13 +54,13 @@ add_omicron_model <- function(neut_model) {
   # (omicron_log10_neut_fold), this number of days post-peak
   omicron_log10_neuts <- log10_neut_over_time(
     time = za_waning_days,
-    maximum_log10_neut = omicron_log10_neut_fold,
+    maximum_log10_neut = za_baseline_immunity_log10_neut_fold + omicron_log10_neut_fold,
     decay = neut_model$model_objects$neut_decay
   )
 
   delta_log10_neuts <- log10_neut_over_time(
     time = za_waning_days,
-    maximum_log10_neut = 0,
+    maximum_log10_neut = za_baseline_immunity_log10_neut_fold,
     decay = neut_model$model_objects$neut_decay
   )
 
@@ -160,18 +165,31 @@ add_omicron_model <- function(neut_model) {
   distribution(reinfection_log_hazard_ratio_omicron) <- normal(omicron_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
   distribution(reinfection_log_hazard_ratio_delta) <- normal(delta_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
 
+  # define a likelihood on Delta R0 vs Reff. Assume a Delta R0 of 6, with 20%
+  # reduction (distancing, mask wearing) for ZA,
+  R0_delta <- 6
+  distancing_effect <- 0.2
+  expected_log_reff_delta <- log(R0_delta * (1 - distancing_effect) * immune_multiplier_delta)
+  log_reff_delta <- log(0.8)
+  log_reff_delta_sd <- 0.2
+  distribution(log_reff_delta) <- normal(expected_log_reff_delta, log_reff_delta_sd)
+
+
   # redefine the greta mdoel, tracing all the things that were traced in the previous version
   new_traced <- module(
     omicron_log10_neut_fold,
     R0_ratio,
-    fraction_immune,
+    za_baseline_immunity_log10_neut_fold,
     za_waning_days,
+    fraction_immune,
     reinfection_correction,
     omicron_vaccine_reduction,
     delta_vaccine_reduction,
     expected_reff_ratio,
     omicron_expected_log_hazard_ratio,
-    delta_expected_log_hazard_ratio
+    delta_expected_log_hazard_ratio,
+    immune_multiplier_omicron,
+    immune_multiplier_delta
   )
 
   old_traced_names <- names(neut_model$greta_model$dag$target_nodes)

@@ -69,53 +69,20 @@ ggsave("figures/ve_waning.png",
 
 
 # plot posterior density of R0 and immune escape
-
-
-# get posteriors over these and construct a KDE
 omicron_params <- sim_omicron_params(neut_model, draws)
-
-# plot in LHSTM style
-omicron_kde_lshtm <- omicron_params %>%
-  relocate(
-    immune_evasion,
-    R0_ratio,
-    .before = everything()
-  ) %>%
-  fit_kde()
-
-omicron_params_lshtm_style <- ggplot() +
-  geom_polygon(
-    aes(x, y),
-    data = get_kde_contour(omicron_kde_lshtm, 0.95),
-    fill = lighten("seagreen", 0.6)
-  ) +
-  geom_polygon(
-    aes(x, y),
-    data = get_kde_contour(omicron_kde_lshtm, 0.5),
-    fill = lighten("seagreen", 0.1)
-  ) +
-  scale_x_continuous(
-    labels = scales::percent
-  ) +
-  geom_hline(
-    yintercept = 1,
-    linetype = 2
-  ) +
-  geom_vline(
-    xintercept = 0,
-    linetype = 2
-  ) +
-  ggtitle("Immune escape and relative transmissibility of Omicron vs. Delta") +
-  xlab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
-  ylab("Omicron relative transmissibility (R0 ratio)") +
-  theme_minimal()
-
-ggsave("figures/omicron_params_lshtm_style.png",
-       plot = omicron_params_lshtm_style,
+omicron_params_plot <- plot_omicron_params(omicron_params)
+ggsave("figures/omicron_params.png",
+       plot = omicron_params_plot,
        width = 7,
        height = 7,
        bg = "white")
 
+# make ve predictions for Omicron
+ve_predictions_omicron <- predict_ves(neut_model, draws, omicron = TRUE)
+write_csv(
+  ve_predictions_omicron,
+  "outputs/ve_waning_predictions_omicron.csv"
+)
 
 omicron_kde_bedford <- omicron_params %>%
   relocate(
