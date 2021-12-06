@@ -23,12 +23,19 @@ get_ve_transmission_estimates <- function() {
     "transmission", "Pfizer", 2, 0.50, 0.35, 0.61, "Eyre"
   ) %>%
     mutate(
-      days = 0,
-      .before = ve
+      days_earliest = 0,
+      # for Eyre, set the upper bound to twice the median, for Pouwels set it to 8 weeks
+      days_latest = case_when(
+        outcome == "transmission" & product == "AZ" ~ 2 * 51,
+        outcome == "transmission" & product == "Pfizer" ~ 2 * 90,
+        TRUE ~ 8 * 7
+      )
     ) %>%
+    rowwise() %>%
     mutate(
-      days_earliest = days,
-      days_latest = days
-    )
+      days = mean(days_earliest:days_latest),
+      .after = dose
+    ) %>%
+    ungroup()
 
 }
