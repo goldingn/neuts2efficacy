@@ -148,7 +148,7 @@ add_omicron_model <- function(neut_model) {
   # https://twitter.com/cap1024/status/1466840869852651529
   # https://drive.google.com/file/d/1hA6Mec2Gq3LGqTEOj35RqSeAb_SmXpbI/view
   # match most recent 95% CI
-  reff_ratio_bounds <- c(2, 2.7)
+  reff_ratio_bounds <- c(1.3, 2.9)
   reff_ratio_estimate <- mean(reff_ratio_bounds)
   reff_ratio_sd <- mean(abs(reff_ratio_bounds - reff_ratio_estimate)) / 1.96
   distribution(reff_ratio_estimate) <- normal(expected_reff_ratio, reff_ratio_sd)
