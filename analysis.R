@@ -52,7 +52,7 @@ ggsave("figures/ecdf_ppc.png",
        height = 5,
        bg = "white")
 
-# predict VEs over time for different types of immunity
+# predict VEs against Delta over time for different types of immunity
 ve_predictions_delta <- predict_ves(neut_model, draws)
 write_csv(
   ve_predictions_delta,
@@ -70,15 +70,6 @@ ggsave("figures/ve_waning_delta.png",
        height = 6,
        bg = "white")
 
-# plot posterior density of R0 and immune escape
-omicron_params <- sim_omicron_params(neut_model, draws)
-omicron_params_plot <- plot_omicron_params(omicron_params)
-ggsave("figures/omicron_params.png",
-       plot = omicron_params_plot,
-       width = 7,
-       height = 7,
-       bg = "white")
-
 # make ve predictions for Omicron
 ve_predictions_omicron <- predict_ves(neut_model, draws, omicron = TRUE)
 write_csv(
@@ -92,7 +83,7 @@ waning_plot_omicron <- plot_waning(
     "mRNA booster",
     "Pfizer vaccine dose 2",
     "AZ vaccine dose 2")
-  ) +
+) +
   ggtitle("Predicted waning in vaccine efficacy",
           "against the Omicron variant")
 
@@ -102,13 +93,57 @@ ggsave("figures/ve_waning_omicron.png",
        height = 6,
        bg = "white")
 
+# plot posterior density of R0 and immune escape
+omicron_params <- sim_omicron_params(neut_model, draws)
+
+omicron_params_plot <- omicron_params %>%
+  plot_omicron_params()
+
+ggsave("figures/omicron_params.png",
+       plot = omicron_params_plot,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+# # filter omicron params to high role of non-immunity factors in reducing
+# # transmission
+# omicron_params_low_distancing_plot <- omicron_params %>%
+#   filter(
+#     za_distancing_effect > quantile(za_distancing_effect, 0.85)
+#   ) %>%
+#   plot_omicron_params()
+#
+#
+# quantile(za_distancing_effect, 0.25)
+
+mean(exp(omicron_params$titre_fold))
+quantile(
+  exp(omicron_params$titre_fold),
+  c(0.025, 0.25, 0.75, 0.975)
+  )
+
+omicron_params %>%
+  ggplot(
+    aes(
+      x = exp(titre_fold)
+    )
+  ) +
+  geom_density(
+    fill = "lightgreen"
+  ) +
+  coord_cartesian(
+    xlim = c(0, 10)
+  ) +
+  xlab("Fold reduction in neutralisation") +
+  ylab("Posterior density") +
+  ggtitle("")
+  theme_minimal()
+
 # to do:
 
 # incorporate immune escape for Delta (get Deb's paper neut ratios?)
 
 # tighten up the methods and write up
-
-# update the period for transmission VEs
 
 # do TP reductions
 
