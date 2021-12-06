@@ -105,45 +105,18 @@ ggsave("figures/omicron_params.png",
        height = 7,
        bg = "white")
 
-# # filter omicron params to high role of non-immunity factors in reducing
-# # transmission
-# omicron_params_low_distancing_plot <- omicron_params %>%
-#   filter(
-#     za_distancing_effect > quantile(za_distancing_effect, 0.85)
-#   ) %>%
-#   plot_omicron_params()
-#
-#
-# quantile(za_distancing_effect, 0.25)
+omicron_neut_fold_plot <- plot_omicron_neut_fold(omicron_params)
 
-mean(exp(omicron_params$titre_fold))
-quantile(
-  exp(omicron_params$titre_fold),
-  c(0.025, 0.25, 0.75, 0.975)
-  )
+ggsave("figures/omicron_neut_fold.png",
+       plot = omicron_neut_fold_plot,
+       width = 7,
+       height = 7,
+       bg = "white")
 
-omicron_params %>%
-  ggplot(
-    aes(
-      x = exp(titre_fold)
-    )
-  ) +
-  geom_density(
-    fill = "lightgreen"
-  ) +
-  coord_cartesian(
-    xlim = c(0, 10)
-  ) +
-  xlab("Fold reduction in neutralisation") +
-  ylab("Posterior density") +
-  ggtitle("")
-  theme_minimal()
 
 # to do:
 
-# incorporate immune escape for Delta (get Deb's paper neut ratios?)
-
-# tighten up the methods and write up
+# write up some methods
 
 # do TP reductions
 
