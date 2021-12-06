@@ -53,20 +53,22 @@ ggsave("figures/ecdf_ppc.png",
        bg = "white")
 
 # predict VEs over time for different types of immunity
-ve_predictions <- predict_ves(neut_model, draws)
+ve_predictions_delta <- predict_ves(neut_model, draws)
 write_csv(
-  ve_predictions,
-  "outputs/ve_waning_predictions.csv"
+  ve_predictions_delta,
+  "outputs/ve_waning_predictions_delta.csv"
 )
 
 # plot model predictions waning, with data overlaid
-waning_plot <- plot_waning(ve_predictions, neut_model$ve_data_modelling)
-ggsave("figures/ve_waning.png",
-       plot = waning_plot,
+waning_plot_delta <- plot_waning(ve_predictions_delta, neut_model$ve_data_modelling) +
+  ggtitle("Predicted waning in vaccine efficacy",
+          "against the Delta variant")
+
+ggsave("figures/ve_waning_delta.png",
+       plot = waning_plot_delta,
        width = 9,
        height = 6,
        bg = "white")
-
 
 # plot posterior density of R0 and immune escape
 omicron_params <- sim_omicron_params(neut_model, draws)
@@ -84,54 +86,29 @@ write_csv(
   "outputs/ve_waning_predictions_omicron.csv"
 )
 
-omicron_kde_bedford <- omicron_params %>%
-  relocate(
-    R0,
-    immune_evasion,
-    .before = everything()
-  ) %>%
-  fit_kde(
-    smooth = c(1.8, 0.3)
-  )
+waning_plot_omicron <- plot_waning(
+  ve_predictions_omicron,
+  immunity_levels = c(
+    "mRNA booster",
+    "Pfizer vaccine dose 2",
+    "AZ vaccine dose 2")
+  ) +
+  ggtitle("Predicted waning in vaccine efficacy",
+          "against the Omicron variant")
 
-omicron_params_bedford_style <- ggplot() +
-  geom_polygon(
-    aes(x, y),
-    data = get_kde_contour(omicron_kde_bedford, 0.95),
-    fill = lighten("seagreen", 0.6)
-  ) +
-  geom_polygon(
-    aes(x, y),
-    data = get_kde_contour(omicron_kde_bedford, 0.5),
-    fill = lighten("seagreen", 0.1)
-  ) +
-  scale_y_continuous(
-    labels = scales::percent
-  ) +
-  geom_vline(
-    xintercept = 6,
-    linetype = 2
-  ) +
-  geom_hline(
-    yintercept = 0,
-    linetype = 2
-  ) +
-  coord_cartesian(
-    xlim = c(1, 12)
-  ) +
-  ggtitle("Inferred immune escape and relative transmissibility of Omicron vs. Delta") +
-  xlab("Omicron transmissibility (R0)") +
-  ylab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
-  theme_minimal()
-
-ggsave("figures/omicron_params_bedford_style.png",
-       plot = omicron_params_bedford_style,
-       width = 7,
-       height = 7,
+ggsave("figures/ve_waning_omicron.png",
+       plot = waning_plot_omicron,
+       width = 9,
+       height = 6,
        bg = "white")
 
-
 # to do:
+
+# incorporate immune escape for Delta (get Deb's paper neut ratios?)
+
+# tighten up the methods and write up
+
+# update the period for transmission VEs
 
 # do TP reductions
 

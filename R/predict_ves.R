@@ -8,7 +8,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-predict_ves <- function(neut_model, draws) {
+predict_ves <- function(neut_model, draws, omicron = FALSE) {
 
   # uncertain multiplier for booster doses (mean 5-fold, 95% CI 3 to 7-fold)
   booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
@@ -27,6 +27,20 @@ predict_ves <- function(neut_model, draws) {
       log10_booster_multipler,
     infection = 0
   )
+
+  # if we are predicting for omicron, add the omicron adjustment to the log10
+  # neuts
+  if (omicron) {
+
+    omicron_adjustment <- neut_model$model_objects$omicron_log10_neut_fold
+
+    log10_neuts_list <- lapply(
+      log10_neuts_list,
+      "+",
+      omicron_adjustment
+    )
+
+  }
 
   lookups <- neut_model$lookups
   lookups$immunity <- names(log10_neuts_list)

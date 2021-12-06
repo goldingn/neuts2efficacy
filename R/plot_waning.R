@@ -8,32 +8,33 @@
 #' @return
 #' @author Nick Golding
 #' @export
-plot_waning <- function(ve_predictions, ve_data_modelling) {
+plot_waning <- function(ve_predictions,
+                        ve_data_modelling = NULL,
+                        immunity_levels = c(
+                          "mRNA booster",
+                          "Pfizer vaccine dose 2",
+                          "Pfizer vaccine dose 1",
+                          "AZ vaccine dose 2",
+                          "AZ vaccine dose 1",
+                          "Infection"
+                        )
+                        ) {
 
-  ve_data_plotting <- ve_data_modelling %>%
-    mutate(
-      `Type of immunity` = case_when(
-        product == "AZ" & dose == 2 ~ "AZ vaccine dose 2",
-        product == "AZ" & dose == 1 ~ "AZ vaccine dose 1",
-        product == "Pfizer" & dose == 2 ~ "Pfizer vaccine dose 2",
-        product == "Pfizer" & dose == 1 ~ "Pfizer vaccine dose 1"
-      )
+  immunity_colours <- c(
+    "mRNA booster" = lighten("darkorchid4", 0.1),
+    "Pfizer vaccine dose 2" = lighten("darkorchid1", 0.1),
+    "Infection" = grey(0.9),
+    "AZ vaccine dose 2" = lighten("firebrick1", 0.1),
+    "Pfizer vaccine dose 1" = lighten("darkorchid1", 0.8),
+    "AZ vaccine dose 1" = lighten("firebrick1", 0.8)
+  )
+
+  immunity_colours <- immunity_colours[immunity_levels]
+
+  plot <- ve_predictions %>%
+    filter(
+      immunity_type %in% immunity_levels
     ) %>%
-    mutate(
-      outcome = str_to_sentence(outcome),
-      outcome = factor(
-        outcome,
-        levels = c(
-          "Death",
-          "Hospitalisation",
-          "Symptoms",
-          "Acquisition",
-          "Transmission"
-        )
-      )
-    )
-
-  ve_predictions %>%
     mutate(
       outcome = str_to_sentence(outcome),
       outcome = factor(
@@ -48,14 +49,7 @@ plot_waning <- function(ve_predictions, ve_data_modelling) {
       ),
       immunity_type = factor(
         immunity_type,
-        levels = c(
-          "mRNA booster",
-          "Pfizer vaccine dose 2",
-          "Pfizer vaccine dose 1",
-          "AZ vaccine dose 2",
-          "AZ vaccine dose 1",
-          "Infection"
-        )
+        levels = immunity_levels
       )
     ) %>%
     rename(
@@ -74,48 +68,14 @@ plot_waning <- function(ve_predictions, ve_data_modelling) {
         ymax = ve_predict_upper_50
       ),
       size = 0.25,
+      alpha = 0.8,
       colour = grey(0.6)
-    ) +
-    geom_errorbarh(
-      aes(
-        xmin = days_earliest,
-        xmax = days_latest,
-        y = ve
-      ),
-      height = 0,
-      alpha = 0.25,
-      size = 1,
-      data = ve_data_plotting
-    ) +
-    geom_errorbar(
-      aes(
-        ymin = ve_lower,
-        ymax = ve_upper,
-        x = days
-      ),
-      width = 7,
-      alpha = 0.5,
-      data = ve_data_plotting
-    ) +
-    geom_point(
-      aes(
-        y = ve
-      ),
-      shape = 21,
-      data = ve_data_plotting
     ) +
     scale_y_continuous(
       labels = scales::percent
     ) +
     scale_fill_manual(
-      values = c(
-        "mRNA booster" = lighten("darkorchid4", 0.1),
-        "Pfizer vaccine dose 2" = lighten("darkorchid1", 0.1),
-        "Infection" = grey(0.9),
-        "AZ vaccine dose 2" = lighten("firebrick1", 0.1),
-        "Pfizer vaccine dose 1" = lighten("darkorchid1", 0.8),
-        "AZ vaccine dose 1" = lighten("firebrick1", 0.8)
-      )
+      values = immunity_colours
     ) +
     scale_alpha_manual(
       values = c("two doses" = 0.8, "one dose" = 0.1)
@@ -125,8 +85,67 @@ plot_waning <- function(ve_predictions, ve_data_modelling) {
     ) +
     ylab("Efficacy") +
     xlab("Days since peak immunity") +
-    ggtitle("Predicted waning in vaccine efficacy",
-            "against the Delta variant") +
     theme_minimal()
+
+
+  plot_data <- !is.null(ve_data_modelling)
+
+  if (plot_data) {
+
+    ve_data_plotting <- ve_data_modelling %>%
+      mutate(
+        `Type of immunity` = case_when(
+          product == "AZ" & dose == 2 ~ "AZ vaccine dose 2",
+          product == "AZ" & dose == 1 ~ "AZ vaccine dose 1",
+          product == "Pfizer" & dose == 2 ~ "Pfizer vaccine dose 2",
+          product == "Pfizer" & dose == 1 ~ "Pfizer vaccine dose 1"
+        )
+      ) %>%
+      mutate(
+        outcome = str_to_sentence(outcome),
+        outcome = factor(
+          outcome,
+          levels = c(
+            "Death",
+            "Hospitalisation",
+            "Symptoms",
+            "Acquisition",
+            "Transmission"
+          )
+        )
+      )
+
+    plot <- plot +
+      geom_errorbarh(
+        aes(
+          xmin = days_earliest,
+          xmax = days_latest,
+          y = ve
+        ),
+        height = 0,
+        alpha = 0.25,
+        size = 1,
+        data = ve_data_plotting
+      ) +
+      geom_errorbar(
+        aes(
+          ymin = ve_lower,
+          ymax = ve_upper,
+          x = days
+        ),
+        width = 7,
+        alpha = 0.5,
+        data = ve_data_plotting
+      ) +
+      geom_point(
+        aes(
+          y = ve
+        ),
+        shape = 21,
+        data = ve_data_plotting
+      )
+  }
+
+  plot
 
 }
