@@ -16,13 +16,18 @@ add_omicron_model <- function(neut_model) {
   # define parameter for ratio of R0s (omicron / delta) with mode of 1
   R0_ratio <- normal(1, 1, truncation = c(0, Inf))
 
-  # parameter for fraction with some immunity (frrom prior infection and/or vaccination)
+  # parameter for fraction with some immunity (from prior infection and/or vaccination)
   fraction_immune <- normal(0.8, 0.05, truncation = c(0, 1))
 
   # parameters for the increase in neut fold of average immune people in ZA, to
   # account for the potential boosting effect of large waves of different
   # variants (WT, beta, delta) and vaccination
   za_baseline_immunity_log10_neut_fold <- normal(0, 1, truncation = c(0, Inf))
+
+  # add a parameter for the degree to which transmission in South Africa is
+  # reduced by things other than immunity - e.g. hygiene and avoidance measures,
+  # and isolation of cases
+  za_distancing_effect <- normal(0.2, 0.1, truncation = c(0, 0.5))
 
   # correction factor for biases in the reinfection log hazard ratio -
   # informative prior to get the Delta wave reinfection hazard ratio in the same
@@ -168,19 +173,18 @@ add_omicron_model <- function(neut_model) {
   # define a likelihood on Delta R0 vs Reff. Assume a Delta R0 of 6, with 20%
   # reduction (distancing, mask wearing) for ZA,
   R0_delta <- 6
-  distancing_effect <- 0.2
-  expected_log_reff_delta <- log(R0_delta * (1 - distancing_effect) * immune_multiplier_delta)
+  expected_log_reff_delta <- log(R0_delta * (1 - za_distancing_effect) * immune_multiplier_delta)
   log_reff_delta <- log(0.8)
   log_reff_delta_sd <- 0.2
   distribution(log_reff_delta) <- normal(expected_log_reff_delta, log_reff_delta_sd)
 
-
-  # redefine the greta mdoel, tracing all the things that were traced in the previous version
+  # redefine the greta model, tracing all the things that were traced in the previous version
   new_traced <- module(
     omicron_log10_neut_fold,
     R0_ratio,
     za_baseline_immunity_log10_neut_fold,
     za_waning_days,
+    za_distancing_effect,
     fraction_immune,
     reinfection_correction,
     omicron_vaccine_reduction,
