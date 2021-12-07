@@ -60,12 +60,22 @@ write_csv(
 )
 
 # plot model predictions waning, with data overlaid
-waning_plot_delta <- plot_waning(ve_predictions_delta, neut_model$ve_data_modelling) +
+waning_plot_delta <- plot_waning(ve_predictions_delta) +
   ggtitle("Predicted waning in vaccine efficacy",
           "against the Delta variant")
 
 ggsave("figures/ve_waning_delta.png",
        plot = waning_plot_delta,
+       width = 9,
+       height = 6,
+       bg = "white")
+
+waning_plot_delta_data <- plot_waning(ve_predictions_delta, neut_model$ve_data_modelling) +
+  ggtitle("Predicted waning in vaccine efficacy",
+          "against the Delta variant")
+
+ggsave("figures/ve_waning_delta_with_data.png",
+       plot = waning_plot_delta_data,
        width = 9,
        height = 6,
        bg = "white")
@@ -112,15 +122,3 @@ ggsave("figures/omicron_neut_fold.png",
        width = 7,
        height = 7,
        bg = "white")
-
-
-# to do:
-
-# write up some methods
-
-# do TP reductions
-
-# add data for variants as neut titre fold of WT, to predict to Delta with C50s
-
-# evaluate prediction of VEs to new variants (alpha, beta) based on variant neut
-# titres
