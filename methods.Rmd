@@ -65,7 +65,9 @@ Given the latent parameter $F_v$, we define three likelihoods, each one over:
  - estimates of the current reproduction number of Delta from a presentation by [Carl Pearson, SACMC](https://twitter.com/cap1024/status/1466840869852651529)
  - estimates of the ratio of the reproduction numbers of Omicron compared to Delta (as estimated from SGTF vs non-SGTF case counts) from the same presentation
  
-Broadly, these three parameters each inform three different unknowns in the model: reinfection hazard ratios inform the degree of immune escape of Omicron, relative to Delta; the reproduction number of Delta informs the degree of immunity against Delta infection; and the ratio of reproduction numbers informs the intrinsic transmissibility of Omicron relative to Delta, after accounting for the degree of immune protection against each. Th likelihoods for these three sources of data are detailed in turn below.
+Broadly, these three parameters each inform three different unknowns in the model: reinfection hazard ratios inform the degree of immune escape of Omicron, relative to Delta; the reproduction number of Delta informs the degree of immunity against Delta infection; and the ratio of reproduction numbers informs the intrinsic transmissibility of Omicron relative to Delta, after accounting for the degree of immune protection against each. The likelihoods for these three sources of data are detailed in turn below.
+
+Note that we treat as unknown parameters all variables in the model that are uncertain and that will impact on our estimates, even if we are not interested in estimating them or if they are not identified from the data. This enables us to integrates over uncertainty in these parameters (a Monte Carlo simulation) whilst estimating parameters of interest.
 
 #### Reinfection hazard ratios
 
@@ -75,18 +77,35 @@ Since the force of infection will likely be the same for the two groups, the rat
 
 The likelihood for this data source is as follows:
 
-$log(\hat{r}_\text{O}) = log(1 - P_{I,D,\text{symptoms},\text{O}}) + \gamma$
+$log(\hat{r}_\text{O}) = log(1 - P_{S,D,\text{symptoms},\text{O}}) + \gamma$
 
-$log(\hat{r}_\Delta) = log(1 - P_{I,D,\text{symptoms},\Delta}) + \gamma$
+$log(\hat{r}_\Delta) = log(1 - P_{S,D,\text{symptoms},\Delta}) + \gamma$
 
 $log(r_\text{O}) \sim N(log(\hat{r}_\text{O}), \sigma_r^2)$
 
 $log(r_\Delta) \sim N(log(\hat{r}_\Delta), \sigma_r^2)$
 
-where $log(r_v)$ denotes the log of the value, and $log(\hat{r_v})$ the log of the expected value of the reinfection hazard ratio during the period dominated by variant $v$ ($\text{O}$ indicating Omicron and $\Delta$ Delta), computed from the log of one minus the expected efficacy of prior immunity against symptomatic disease, corrected by a log-offset parameter $\gamma$ to absorb any multiplicative bias in the hazard ratios (e.g. due to an incorrect specification of the ascertainment parameters in the model used to infer the hazard ratios). $P_{I,D,\text{symptoms},v})$ is the population-level efficacy against symptomatic disease from variant $v$, given immunity source $I$, $D$ days since peak immunity. This is defined by  the parameters of the vaccine effect mode, $F_\text{O}$, and a parameter $\mu^*_{s,0}$ for the baseline peak level of immunity against the index variant (Delta), with standard half normal prior to enforce that those with prior immunity must have had at minimum the level of immunity conferred by a single wild-type infection. We defined a normal prior over $D$ with mean of 120 days and standard deviation of 20 days, to represent the average time since infection in the Delta wave. We set $\sigma_r = 0.25$ to reflect a significant degree of uncertainty in the relationship between these estimates and the adjusted relative risks, and set $r_\text{O} = 0.3$ and $r_{\Delta} = 0.1$, which were read off Figure 5 in [Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2).
+where $log(r_v)$ denotes the log of the value, and $log(\hat{r_v})$ the log of the expected value of the reinfection hazard ratio during the period dominated by variant $v$ ($\text{O}$ indicating Omicron and $\Delta$ Delta), computed from the log of one minus the expected efficacy of prior immunity against symptomatic disease, corrected by a log-offset parameter $\gamma$ to absorb any multiplicative bias in the hazard ratios (e.g. due to an incorrect specification of the ascertainment parameters in the model used to infer the hazard ratios). $P_{S,D,\text{symptoms},v})$ is the population-level efficacy against symptomatic disease from variant $v$, given immunity source $S$, $D$ days since peak immunity. This is defined by  the parameters of the vaccine effect mode, $F_\text{O}$, and a parameter $\mu^*_{s,0}$ for the baseline peak level of immunity against the index variant (Delta), with standard half normal prior to enforce that those with prior immunity must have had at minimum the level of immunity conferred by a single wild-type infection. We defined a normal prior over $D$ with mean of 120 days and standard deviation of 20 days, to represent the average time since infection in the Delta wave. We set $\sigma_r = 0.25$ to reflect a significant degree of uncertainty in the relationship between these estimates and the adjusted relative risks, and set $r_\text{O} = 0.3$ and $r_{\Delta} = 0.1$, which were read off Figure 5 in [Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2).
 
 #### Delta reproduction number
 
+Whilst the Delta variant is estimated to have the highest intrinsic transmissibility of variants so far identified (estimates range from 6-8), estimates of the reproduction number in Gauteng Province, South Africa at the time of the Omicron outbreak are largely just below 1, indicating declining case counts. There were minimal lockdown or distancing restrictions in place in Gauteng province during this time, and [estimates of mobility](https://www.google.com/covid19/mobility/) indicate that mixing rates are largely at or above baseline levels (with the exception of visits to workplaces at a 7% reduction). The majority of the reduction in transmission from R0 conditions in Gauteng is therefore likely to be prior immunity from previous epidemic waves, with some additional effect of vaccination. Given the multiple waves of infections with different variants (wild-type, Beta, Delta), and evidence of multiple renfections over this period (see Figure in [Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2)) the level of immunity, and especially protection against Delta is likely to be considerably higher than the protection provided by a single infection against wild-type SARS-CoV-2. This degree of immunity can therefore be inferred from an assumed R0 and estimate of the effective reproduction number, given some assumptions about the fraction with any immunity ($Q$) and the effect of human behaviour, public health and social measures, and isolation of cases on transmission ($C$).
+
+We define the likelihood on recent estimates of the reproduc    tion number of Delta in Gauteng Province as:
+  
+$\hat{R}_\Delta = R_{0,\Delta} * (1 - C) * I_\Delta$
+
+$log(R_\Delta) \sim N(log(\hat{R}_\Delta), \sigma^2_R)$
+
+We calculate the reduction in transmission of the Delta variant due to immunity $I_\Delta$ as the product of the population-level reductions due to the efficacy of immunity against acquisition ($A_\Delta$) and onward transmission of breakthrough infections ($T_\Delta$), each of which is calculated from the corresponding immune efficacy for Delta, given the modelled level of peak immunity and time since peak (as above) and the fraction of the population with immunity $Q$.
+
+$A_\Delta = Q (1 - P_{S,D,\text{acquisition},\Delta}) + (1 - Q)$
+
+$T_\Delta = Q (1 - P_{S,D,\text{transmission},\Delta}) + (1 - Q)$
+
+$I_\Delta = A_\Delta * T_\Delta$
+
+We assign $Q$ an informative normal prior with mean 0.8 and standard deviation 0.05 (70-90% have some immunity), truncated to the unit interval. To be conservative (leaning towards lower levels of immunity effect and therefore higher intrinsic transmissibility), we assume that $R_{0,\Delta} = 6$, at the lower end of international estimates, and that $C$ has a normal prior distribution with mean 0.2 (20% reduction in transmission), a standard deviation 0.1, and truncated between 0 and 0.5 (maximum 50% reduction). We obtain $R_\Delta = 0.8$ and $\sigma^2_R = 0.2$ estimates from [Pearson, SACMC estimates](https://twitter.com/cap1024/status/1466840869852651529).
 
 
 #### Reproduction number ratio

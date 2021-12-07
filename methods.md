@@ -178,8 +178,14 @@ of Omicron, relative to Delta; the reproduction number of Delta informs
 the degree of immunity against Delta infection; and the ratio of
 reproduction numbers informs the intrinsic transmissibility of Omicron
 relative to Delta, after accounting for the degree of immune protection
-against each. Th likelihoods for these three sources of data are
+against each. The likelihoods for these three sources of data are
 detailed in turn below.
+
+Note that we treat as unknown parameters all variables in the model that
+are uncertain and that will impact on our estimates, even if we are not
+interested in estimating them or if they are not identified from the
+data. This enables us to integrates over uncertainty in these parameters
+(a Monte Carlo simulation) whilst estimating parameters of interest.
 
 #### Reinfection hazard ratios
 
@@ -214,9 +220,9 @@ observations.
 
 The likelihood for this data source is as follows:
 
-*l**o**g*(*r̂*<sub>O</sub>) = *l**o**g*(1 − *P*<sub>*I*, *D*, symptoms, O</sub>) + *γ*
+*l**o**g*(*r̂*<sub>O</sub>) = *l**o**g*(1 − *P*<sub>*S*, *D*, symptoms, O</sub>) + *γ*
 
-*l**o**g*(*r̂*<sub>*Δ*</sub>) = *l**o**g*(1 − *P*<sub>*I*, *D*, symptoms, *Δ*</sub>) + *γ*
+*l**o**g*(*r̂*<sub>*Δ*</sub>) = *l**o**g*(1 − *P*<sub>*S*, *D*, symptoms, *Δ*</sub>) + *γ*
 
 *l**o**g*(*r*<sub>O</sub>) ∼ *N*(*l**o**g*(*r̂*<sub>O</sub>), *σ*<sub>*r*</sub><sup>2</sup>)
 
@@ -230,8 +236,8 @@ efficacy of prior immunity against symptomatic disease, corrected by a
 log-offset parameter *γ* to absorb any multiplicative bias in the hazard
 ratios (e.g. due to an incorrect specification of the ascertainment
 parameters in the model used to infer the hazard ratios).
-*P*<sub>*I*, *D*, symptoms, *v*</sub>) is the population-level efficacy
-against symptomatic disease from variant *v*, given immunity source *I*,
+*P*<sub>*S*, *D*, symptoms, *v*</sub>) is the population-level efficacy
+against symptomatic disease from variant *v*, given immunity source *S*,
 *D* days since peak immunity. This is defined by the parameters of the
 vaccine effect mode, *F*<sub>O</sub>, and a parameter
 *μ*<sub>*s*, 0</sub><sup>\*</sup> for the baseline peak level of
@@ -247,6 +253,64 @@ the adjusted relative risks, and set *r*<sub>O</sub> = 0.3 and
 al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2).
 
 #### Delta reproduction number
+
+Whilst the Delta variant is estimated to have the highest intrinsic
+transmissibility of variants so far identified (estimates range from
+6-8), estimates of the reproduction number in Gauteng Province, South
+Africa at the time of the Omicron outbreak are largely just below 1,
+indicating declining case counts. There were minimal lockdown or
+distancing restrictions in place in Gauteng province during this time,
+and [estimates of mobility](https://www.google.com/covid19/mobility/)
+indicate that mixing rates are largely at or above baseline levels (with
+the exception of visits to workplaces at a 7% reduction). The majority
+of the reduction in transmission from R0 conditions in Gauteng is
+therefore likely to be prior immunity from previous epidemic waves, with
+some additional effect of vaccination. Given the multiple waves of
+infections with different variants (wild-type, Beta, Delta), and
+evidence of multiple renfections over this period (see Figure in
+[Pulliam et
+al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2))
+the level of immunity, and especially protection against Delta is likely
+to be considerably higher than the protection provided by a single
+infection against wild-type SARS-CoV-2. This degree of immunity can
+therefore be inferred from an assumed R0 and estimate of the effective
+reproduction number, given some assumptions about the fraction with any
+immunity (*Q*) and the effect of human behaviour, public health and
+social measures, and isolation of cases on transmission (*C*).
+
+We define the likelihood on recent estimates of the reproduc tion number
+of Delta in Gauteng Province as:
+
+*R̂*<sub>*Δ*</sub> = *R*<sub>0, *Δ*</sub> \* (1 − *C*) \* *I*<sub>*Δ*</sub>
+
+*l**o**g*(*R*<sub>*Δ*</sub>) ∼ *N*(*l**o**g*(*R̂*<sub>*Δ*</sub>), *σ*<sub>*R*</sub><sup>2</sup>)
+
+We calculate the reduction in transmission of the Delta variant due to
+immunity *I*<sub>*Δ*</sub> as the product of the population-level
+reductions due to the efficacy of immunity against acquisition
+(*A*<sub>*Δ*</sub>) and onward transmission of breakthrough infections
+(*T*<sub>*Δ*</sub>), each of which is calculated from the corresponding
+immune efficacy for Delta, given the modelled level of peak immunity and
+time since peak (as above) and the fraction of the population with
+immunity *Q*.
+
+*A*<sub>*Δ*</sub> = *Q*(1 − *P*<sub>*S*, *D*, acquisition, *Δ*</sub>) + (1 − *Q*)
+
+*T*<sub>*Δ*</sub> = *Q*(1 − *P*<sub>*S*, *D*, transmission, *Δ*</sub>) + (1 − *Q*)
+
+*I*<sub>*Δ*</sub> = *A*<sub>*Δ*</sub> \* *T*<sub>*Δ*</sub>
+
+We assign *Q* an informative normal prior with mean 0.8 and standard
+deviation 0.05 (70-90% have some immunity), truncated to the unit
+interval. To be conservative (leaning towards lower levels of immunity
+effect and therefore higher intrinsic transmissibility), we assume that
+*R*<sub>0, *Δ*</sub> = 6, at the lower end of international estimates,
+and that *C* has a normal prior distribution with mean 0.2 (20%
+reduction in transmission), a standard deviation 0.1, and truncated
+between 0 and 0.5 (maximum 50% reduction). We obtain
+*R*<sub>*Δ*</sub> = 0.8 and *σ*<sub>*R*</sub><sup>2</sup> = 0.2
+estimates from [Pearson, SACMC
+estimates](https://twitter.com/cap1024/status/1466840869852651529).
 
 #### Reproduction number ratio
 
