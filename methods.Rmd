@@ -34,9 +34,9 @@ At the population level, the efficacy of immunity against a given outcome from a
 
 $P_{s,d,o,v} = \int_{-\infty}^{\infty} E_{o}(n_v)f(n_v | \mu_{s,d,v}, \sigma^2) dn_v$
 
-The mean neutralisation level $\mu_{s,d,v}$ for a cohort with immunity source $s$ and number of days $d$ since peak immunity from that source is assumed to follow exponential decay with half-life of $h$ days, from a peak mean neutralisation level against that variant of $\mu^*_{s,v}$ for each source:
+The mean neutralisation level $\mu_{s,d,v}$ for a cohort with immunity source $s$ and number of days $d$ since peak immunity from that source is assumed to follow exponential decay with half-life of $H$ days, from a peak mean neutralisation level against that variant of $\mu^*_{s,v}$ for each source:
 
-$\mu_{s,d} = log10(10 ^ {\mu^*_{s,v}} e^{-d/h})$
+$\mu_{s,d} = log10(10 ^ {\mu^*_{s,v}} e^{-d/H})$
 
 The peak mean neutralisation level against a given variant is in turn modelled as a log10 fold increase or decrease in neutralising antibody titres that variant, relative to an index variant:
 
@@ -44,7 +44,7 @@ $\mu^*_{s,v} = \mu^*_{s,0} + F_v$
 
 Where for the index variant $F_v = 0$, for a variant with immune escape relative to the index the $F_v < 1$, and for a variant more susceptible  to neutralisation than the index, $F_v > 1$.
 
-Among these model parameters, $\mu^*_{s,0}$, $F_v$, $h$, $\sigma^2$ can be estimated from neutralisation assay experiments. The parameters $n_{o,50}$ (one per outcome) and $k$ (one in total) must be learned by fitting the model to data on population-level vaccine efficacy. In this Bayesian implementation, the parameter $\sigma^2$ is kept fixed at the value estimated by [Cromer et al. (2021)](https://doi.org/10.1016/S2666-5247(21)00267-6), $\mu^*_{s,0}$, $F_v$, and $h$ are given informative priors based on estimates from [Khoury et al. (2020)](https://doi.org/10.1038/s41591-021-01377-8) and [Cromer et al. (2021)](https://doi.org/10.1016/S2666-5247(21)00267-6), and the remaining parameters are given less  informative priors. This enables the model to update these parameters slightly based on the data, and fully incorporate uncertainty in these parameters into predictions.
+Among these model parameters, $\mu^*_{s,0}$, $F_v$, $H$, $\sigma^2$ can be estimated from neutralisation assay experiments. The parameters $n_{o,50}$ (one per outcome) and $k$ (one in total) must be learned by fitting the model to data on population-level vaccine efficacy. In this Bayesian implementation, the parameter $\sigma^2$ is kept fixed at the value estimated by [Cromer et al. (2021)](https://doi.org/10.1016/S2666-5247(21)00267-6), $\mu^*_{s,0}$, $F_v$, and $h$ are given informative priors based on estimates from [Khoury et al. (2020)](https://doi.org/10.1038/s41591-021-01377-8) and [Cromer et al. (2021)](https://doi.org/10.1016/S2666-5247(21)00267-6), and the remaining parameters are given less  informative priors. This enables the model to update these parameters slightly based on the data, and fully incorporate uncertainty in these parameters into predictions.
 
 This model is fitted to estimates from [Andrews et al. (2021)](https://doi.org/10.1101/2021.09.15.21263583) of the population-level efficacy of the Pfizer and AstraZeneca vaccines (two doses) against clinical outcomes (death, severe disease, symptomatic infection) from the Delta variant over different periods of time post-administration, and estimates from [Pouwels et al. (2021)](ttps://doi.org/10.1101/2021.09.28.21264260) and from [Eyre et al. (2021)](https://doi.org/10.1101/2021.09.28.21264260) against acquisition (symptomatic or asymptomatic) and onward transmission of breakthrough infections, respectively, of the Delta variant.
 
@@ -56,6 +56,43 @@ All VE estimates covered events over a period of time, and $d_j$ was taken as th
 
 ### Extension to Omicron
 
+The vaccine efficacy model provides a method by which to map between vaccine efficacies for different variants, outcomes, sources of immunity, and degrees of waning. For a given value of the Omicron immune escape parameter $F_\text{O}$ relative to Delta (with relative escape parameter $F_\Delta = 0$) as an index variant, it is possible to infer the degree of immune protection against acquisition and transmission for a cohort with a given level of immunity. Combined with the fraction of the population with some immunity, this enables estimation of the reduction in transmission that could be expected, and therefore the intrinsic transmissibility ($R_0$) that the variant must possess to explain observed rates of reproduction of the virus. Given $F_v$ it is also possible to predict vaccine efficacy against Omicron. 
+
+The parameter $F_v$ can be estimated directly from neutralisation assays against Omicron. Since these are not yet available, we instead infer plausible values of $F_v$ by treating it as a latent parameter in a Bayesian model, and fitting the model to observational data on both reinfection rates and reproduction rates of Delta and Omicron in South Africa. Note that the aim of this analysis is not to provide a precise estimate of any of these things, but to infer the range of values that are consistent with available data, whilst accounting for and incorporating as many sources of uncertainty as is possible.
+
+Given the latent parameter $F_v$, we define three likelihoods, each one over:
+ - estimates of the reinfection hazard ratio from [Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2) for the recent period and for the period of the Delta wave
+ - estimates of the current reproduction number of Delta from a presentation by [Carl Pearson, SACMC](https://twitter.com/cap1024/status/1466840869852651529)
+ - estimates of the ratio of the reproduction numbers of Omicron compared to Delta (as estimated from SGTF vs non-SGTF case counts) from the same presentation
+ 
+Broadly, these three parameters each inform three different unknowns in the model: reinfection hazard ratios inform the degree of immune escape of Omicron, relative to Delta; the reproduction number of Delta informs the degree of immunity against Delta infection; and the ratio of reproduction numbers informs the intrinsic transmissibility of Omicron relative to Delta, after accounting for the degree of immune protection against each. Th likelihoods for these three sources of data are detailed in turn below.
+
+#### Reinfection hazard ratios
+
+[Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2) provide modelled estimates over time of the ratio between two hazards (rates of occurrence per unit time): the new infection hazard (rate of new infections per person without previous infection), and the reinfection hazard (rate of new infections among people who have had a previous infection). These estiamtes are informed by data on sequential infections from routine surveillance, and their model accounts for imperfect and differential case ascertainment between the two groups. They also provide an estimate of the ratio of these two hazards.
+
+Since the force of infection will likely be the same for the two groups, the ratio of the reinfection hazard to the infection hazard can be interpreted as a proxy for the relative risk of infection between immune and non-immune individuals. This can be loosely interpreted as an estimate of one minus the efficacy of prior immunity against symptomatic infection (because the detection process is likely dependent on clinical presentation). Comparing the observed values of this parameter for the recent period (approximately 0.3) and the Delta wave (approximately 0.1) against the values predicted by the vaccine efficacy model for the dominant variants for a given $F_v$ (and an assumed mean neutralisation level among those with immunity) enables quantitative inference about the degree of immune escape of Omicron relative to Delta. Since this is a heavily modelled estimate and that vaccine efficacy against symptomatic disease (to which the model is calibrated) will be somewhat different from immunity against (detectable) reinfection, we assign a large degree of uncertainty to these observations.
+
+The likelihood for this data source is as follows:
+
+$log(\hat{r}_\text{O}) = log(1 - P_{I,D,\text{symptoms},\text{O}}) + \gamma$
+
+$log(\hat{r}_\Delta) = log(1 - P_{I,D,\text{symptoms},\Delta}) + \gamma$
+
+$log(r_\text{O}) \sim N(log(\hat{r}_\text{O}), \sigma_r^2)$
+
+$log(r_\Delta) \sim N(log(\hat{r}_\Delta), \sigma_r^2)$
+
+where $log(r_v)$ denotes the log of the value, and $log(\hat{r_v})$ the log of the expected value of the reinfection hazard ratio during the period dominated by variant $v$ ($\text{O}$ indicating Omicron and $\Delta$ Delta), computed from the log of one minus the expected efficacy of prior immunity against symptomatic disease, corrected by a log-offset parameter $\gamma$ to absorb any multiplicative bias in the hazard ratios (e.g. due to an incorrect specification of the ascertainment parameters in the model used to infer the hazard ratios). $P_{I,D,\text{symptoms},v})$ is the population-level efficacy against symptomatic disease from variant $v$, given immunity source $I$, $D$ days since peak immunity. This is defined by  the parameters of the vaccine effect mode, $F_\text{O}$, and a parameter $\mu^*_{s,0}$ for the baseline peak level of immunity against the index variant (Delta), with standard half normal prior to enforce that those with prior immunity must have had at minimum the level of immunity conferred by a single wild-type infection. We defined a normal prior over $D$ with mean of 120 days and standard deviation of 20 days, to represent the average time since infection in the Delta wave. We set $\sigma_r = 0.25$ to reflect a significant degree of uncertainty in the relationship between these estimates and the adjusted relative risks, and set $r_\text{O} = 0.3$ and $r_{\Delta} = 0.1$, which were read off Figure 5 in [Pulliam et al. (2021)](https://www.medrxiv.org/content/10.1101/2021.11.11.21266068v2).
+
+#### Delta reproduction number
+
+
+
+#### Reproduction number ratio
+
+
+ 
 
 
 ### Fitting the model
