@@ -1,5 +1,5 @@
 ---
-title: "methods"
+title: "Methods Description"
 author: "Nick Golding"
 date: "07/12/2021"
 output: github_document
@@ -9,14 +9,14 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Overview 
+### Overview 
 
 This document describes the methods used to delineate plausible values of the intrinsic transmissibility and immune evasion of the Omicron variant of SARS-CoV-2. It is structured in three parts:
  - A summary of Bayesian implementation of the model of vaccine efficacy
  - The extension of this Bayesian model to available data on Omicron
  - Details on model fitting by MCMC using the greta R package
 
-# Vaccine efficacy model
+### Vaccine efficacy model
 
 The core of this analysis is a Bayesian implementation of a predictive model of vaccine efficacy documented and validated in [Khoury et al. (2020)](https://doi.org/10.1038/s41591-021-01377-8) and [Cromer et al. (2021)](https://doi.org/10.1016/S2666-5247(21)00267-6). The original publications estimate parameters by maximum likelihood, and focus on predicting vaccine efficacies for different combinations of vaccine dose and product, the outcome against which efficacy is measured, and the SARS-CoV-2 variant, based on neutralising antibody titres. See those publications for detailed analysis and validation.
 

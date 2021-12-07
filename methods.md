@@ -1,9 +1,9 @@
-methods
+Methods Description
 ================
 Nick Golding
 07/12/2021
 
-# Overview
+### Overview
 
 This document describes the methods used to delineate plausible values
 of the intrinsic transmissibility and immune evasion of the Omicron
@@ -12,7 +12,7 @@ Bayesian implementation of the model of vaccine efficacy - The extension
 of this Bayesian model to available data on Omicron - Details on model
 fitting by MCMC using the greta R package
 
-# Vaccine efficacy model
+### Vaccine efficacy model
 
 The core of this analysis is a Bayesian implementation of a predictive
 model of vaccine efficacy documented and validated in [Khoury et
