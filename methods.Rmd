@@ -30,7 +30,7 @@ $E_{o}(n_{i,v}) = 1 / (1 + e^{-k(n_{i,v} - n_{o,50})})$
 
 Note that this model can equivalently be interpreted as there being a different deterministic threshold for each different *event* whereby that outcome would occur in the absence of vaccination, and would not occur if the neutralisation level is above the random threshold, where the random thresholds are drawn from a logistic distribution with location parameter $n_{o,50}$ and scale parameter $1/k$.
 
-At the population level, the efficacy of immunity against a given outcome from a given variant in a cohort with mean neutralisation level $\mu_{s,d,v}$ is the average probability over the whole population of the outcome being averted. This is computed by integrating the sigmoid function with respect to the normal distribution of neutralisation levels. This integral has no closed form, so must be computed by numerical approximation.
+At the population level, the efficacy of immunity against a given outcome from a given variant in a cohort with mean neutralisation level $\mu_{s,d,v}$ is the average probability over the whole population of the outcome being averted. This is computed by integrating the sigmoid function with respect to the normal distribution of neutralisation levels. This integral has no closed form, so must be computed by numerical approximation (Gauss-Legendre quadrature).
 
 $P_{s,d,o,v} = \int_{-\infty}^{\infty} E_{o}(n_v)f(n_v | \mu_{s,d,v}, \sigma^2) dn_v$
 
@@ -54,6 +54,15 @@ $\text{logit}(\text{VE}_j) \sim N(\text{logit}(P_{s_j,d_j,o_j,v_j}), \text{logit
 
 All VE estimates covered events over a period of time, and $d_j$ was taken as the midpoint of that period.
 
+### Extension to Omicron
+
+
+
+### Fitting the model
+
+The model is defined, fitted, and predicted from using the greta R package. Inference is performed with 10 independent chains of Hamiltonian Monte Carlo, each run for 1000 samples after 1000 (discarded) warmup iterations. Convergence is assessed by the potential scale reduction factor statistic (1.01 or less for all parameters), the effective sample size (greater than 500 for all parameters) and visual inspection of trace plots.
+
+For choices of prior distributions, see [here](R/build_neut_model.R) for the main vaccine efficacy model and [here](R/add_omicron_model.R) for extensions to inferring the transmissibility and immune escape of Omicron. See [here](R/analysis) for more details of model fitting, and an overview of the entire analysis.
 
 
 

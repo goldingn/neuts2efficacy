@@ -66,7 +66,7 @@ outcome from a given variant in a cohort with mean neutralisation level
 population of the outcome being averted. This is computed by integrating
 the sigmoid function with respect to the normal distribution of
 neutralisation levels. This integral has no closed form, so must be
-computed by numerical approximation.
+computed by numerical approximation (Gauss-Legendre quadrature).
 
 *P*<sub>*s*, *d*, *o*, *v*</sub> = ∫<sub> − ∞</sub><sup>∞</sup>*E*<sub>*o*</sub>(*n*<sub>*v*</sub>)*f*(*n*<sub>*v*</sub>\|*μ*<sub>*s*, *d*, *v*</sub>, *σ*<sup>2</sup>)*d**n*<sub>*v*</sub>
 
@@ -133,3 +133,21 @@ logit(VE<sub>*j*</sub>) ∼ *N*(logit(*P*<sub>*s*<sub>*j*</sub>, *d*<sub>*
 
 All VE estimates covered events over a period of time, and
 *d*<sub>*j*</sub> was taken as the midpoint of that period.
+
+### Extension to Omicron
+
+### Fitting the model
+
+The model is defined, fitted, and predicted from using the greta R
+package. Inference is performed with 10 independent chains of
+Hamiltonian Monte Carlo, each run for 1000 samples after 1000
+(discarded) warmup iterations. Convergence is assessed by the potential
+scale reduction factor statistic (1.01 or less for all parameters), the
+effective sample size (greater than 500 for all parameters) and visual
+inspection of trace plots.
+
+For choices of prior distributions, see [here](R/build_neut_model.R) for
+the main vaccine efficacy model and [here](R/add_omicron_model.R) for
+extensions to inferring the transmissibility and immune escape of
+Omicron. See [here](R/analysis) for more details of model fitting, and
+an overview of the entire analysis.
