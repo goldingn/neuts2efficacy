@@ -17,34 +17,7 @@ sim_omicron_params <- function(neut_model, draws, n = 1e4) {
   za_baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold
   omicron_log10_neut_fold <- neut_model$model_objects$omicron_log10_neut_fold
 
-  omicron_ves_peak <- ve_from_mean_log10_neut(
-    mean_log10_neut_vec = rep(za_baseline_immunity_log10_neut_fold + omicron_log10_neut_fold, 5),
-    sd_log10_neut = neut_model$model_objects$sd_log10_neut_titres,
-    log_k = neut_model$model_objects$log_k,
-    c50_vec = neut_model$model_objects$c50s,
-    method =  "gaussian"
-  )
-
-  delta_ves_peak <- ve_from_mean_log10_neut(
-    mean_log10_neut_vec = rep(za_baseline_immunity_log10_neut_fold, 5),
-    sd_log10_neut = neut_model$model_objects$sd_log10_neut_titres,
-    log_k = neut_model$model_objects$log_k,
-    c50_vec = neut_model$model_objects$c50s,
-    method =  "gaussian"
-  )
-
-  acquisition_idx <- match("acquisition", neut_model$lookups$outcome)
-  transmission_idx <- match("transmission", neut_model$lookups$outcome)
-
-  omicron_vaccine_reduction <- prod(1 - omicron_ves_peak[c(acquisition_idx, transmission_idx)])
-  delta_vaccine_reduction <- prod(1 - delta_ves_peak[c(acquisition_idx, transmission_idx)])
-
-  # VEs against overall transmission for omicron and delta
-  omicron_overall_ve <- 1 - omicron_vaccine_reduction
-  delta_overall_ve <- 1 - delta_vaccine_reduction
-
-  # % reduction in overall VE against transmission
-  immune_evasion <- 1 - omicron_overall_ve / delta_overall_ve
+  za_immune_evasion <- immune_evasion(neut_model)
 
   # other ratios
   R0 <- 6 * neut_model$model_objects$R0_ratio
@@ -55,7 +28,7 @@ sim_omicron_params <- function(neut_model, draws, n = 1e4) {
   R0_ratio <- neut_model$model_objects$R0_ratio
 
   sims <- calculate(
-    R0, titre_fold, immune_evasion, reff_ratio, R0_ratio, za_distancing_effect,
+    R0, titre_fold, za_immune_evasion, reff_ratio, R0_ratio, za_distancing_effect,
     values = draws,
     nsim = n
   )
@@ -63,7 +36,7 @@ sim_omicron_params <- function(neut_model, draws, n = 1e4) {
   tibble(
     R0 = sims$R0[, 1, 1],
     titre_fold = sims$titre_fold[, 1, 1],
-    immune_evasion = sims$immune_evasion[, 1, 1],
+    immune_evasion = sims$za_immune_evasion[, 1, 1],
     reff_ratio = sims$reff_ratio[, 1, 1],
     R0_ratio = sims$R0_ratio[, 1, 1],
     za_distancing_effect = sims$za_distancing_effect[, 1, 1]

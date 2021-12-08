@@ -8,7 +8,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-predict_ves <- function(neut_model, draws, omicron = FALSE) {
+predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
 
   # uncertain multiplier for booster doses (mean 5-fold, 95% CI 3 to 7-fold)
   booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
@@ -73,11 +73,14 @@ predict_ves <- function(neut_model, draws, omicron = FALSE) {
     method = "gaussian"
   )
 
-  ve_predict_sims <- calculate(
-    ve_predict,
-    values = draws,
-    nsim = 1000
-  )[[1]][, , 1]
+  ve_predict_sims <- with(
+    neut_model$model_objects,
+    calculate(
+      ve_predict,
+      values = draws,
+      nsim = nsim
+    )[[1]][, , 1]
+  )
 
   ve_prediction_data %>%
     mutate(

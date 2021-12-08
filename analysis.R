@@ -144,3 +144,23 @@ omicron_params %>%
     sd = sd(immune_evasion),
     n = n()
   )
+
+
+# given point estimates on the avocado, compute VEs for vaccines and waning for
+# Omicron in Australia
+omicron_scenarios <- tibble::tribble(
+  ~scenario, ~R0_ratio_target, ~immune_evasion_target,
+  "high_R0", 1.1, 0.25,
+  "intermediate", 0.65, 0.5,
+  "high_evasion", 0.5, 0.8
+)
+
+ve_predictions_omicron_scenarios <- predict_ve_scenarios(
+  scenarios = omicron_scenarios,
+  neut_model = neut_model,
+  draws = draws,
+  omicron = TRUE
+)
+
+
+
