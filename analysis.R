@@ -26,6 +26,11 @@ draws <- fit(neut_model)
 summarise_fit(draws) %>%
   print(n = Inf)
 
+# print parameters for simulation model
+format_parameters(neut_model, draws) %>%
+  as.data.frame()
+
+
 trace_plot <- bayesplot::mcmc_trace(draws)
 ggsave("figures/mcmc_trace.png",
        plot = trace_plot,
