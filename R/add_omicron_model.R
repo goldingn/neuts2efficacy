@@ -27,7 +27,9 @@ add_omicron_model <- function(neut_model) {
   # add a parameter for the degree to which transmission in South Africa is
   # reduced by things other than immunity - e.g. hygiene and avoidance measures,
   # and isolation of cases
-  za_distancing_effect <- normal(0.2, 0.1, truncation = c(0, 0.5))
+
+  # try this with 2-3 fold reduction (seems implausible to me, but matches Carl Pearson assumption)
+  za_distancing_effect <- normal(1 - 1/2.5, 0.1, truncation = c(0, 1))
 
   # correction factor for biases in the reinfection log hazard ratio -
   # informative prior to get the Delta wave reinfection hazard ratio in the same

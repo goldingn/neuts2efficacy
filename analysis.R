@@ -109,7 +109,7 @@ omicron_params <- sim_omicron_params(neut_model, draws)
 omicron_params_plot <- omicron_params %>%
   plot_omicron_params()
 
-ggsave("figures/omicron_params.png",
+ggsave("figures/omicron_params_more_distancing.png",
        plot = omicron_params_plot,
        width = 7,
        height = 7,
