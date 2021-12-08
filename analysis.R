@@ -122,3 +122,25 @@ ggsave("figures/omicron_neut_fold.png",
        width = 7,
        height = 7,
        bg = "white")
+
+# summarise immune escape consistent with Sigal Lab estimates
+
+# Assuming 41.4 fold reduction relative to WT, and taking 3.9 fold reduction of
+# Delta vs WT from Deb’s paper to get 10.6 fold reduction - summarise the samples in this region
+omicron_params %>%
+  filter(
+    titre_fold > log10(10.2) & titre_fold < log10(11)
+  ) %>%
+  summarise(
+    mean = mean(immune_evasion),
+    sd = sd(immune_evasion),
+    n = n()
+  )
+
+# summarise from all samples
+omicron_params %>%
+  summarise(
+    mean = mean(immune_evasion),
+    sd = sd(immune_evasion),
+    n = n()
+  )
