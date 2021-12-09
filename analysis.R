@@ -142,6 +142,17 @@ omicron_params %>%
     n = n()
   )
 
+# Ciesek estimates
+omicron_params %>%
+  filter(
+    titre_fold > log10(36.5) & titre_fold < log10(37.5)
+  ) %>%
+  summarise(
+    mean = mean(immune_evasion),
+    sd = sd(immune_evasion),
+    n = n()
+  )
+
 # summarise from all samples
 omicron_params %>%
   summarise(
@@ -167,5 +178,60 @@ ve_predictions_omicron_scenarios <- predict_ve_scenarios(
   omicron = TRUE
 )
 
+write_csv(
+  ve_predictions_omicron_scenarios,
+  "outputs/ve_waning_predictions_omicron_scenarios.csv"
+)
+
+
+ve_predictions_omicron_scenarios %>%
+  mutate(
+    scenario = factor(
+      scenario,
+      levels = c(
+        "high_R0",
+        "intermediate",
+        "high_evasion"
+      )
+    ),
+    outcome = factor(
+      outcome,
+      levels = c(
+        "death",
+        "hospitalisation",
+        "symptoms",
+        "acquisition",
+        "transmission"
+      )
+    ),
+    immunity = factor(
+      immunity,
+      levels = c(
+        "booster",
+        "pfizer_dose_2",
+        "infection",
+        "az_dose_2",
+        "pfizer_dose_1",
+        "az_dose_1"
+      )
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = days,
+      y = ve,
+      colour = immunity
+    )
+  ) +
+  geom_line(
+    size = 1,
+    alpha = 0.8
+  ) +
+  facet_grid(
+    outcome ~ scenario
+  ) +
+  ylab("Efficacy") +
+  xlab("Days since peak immunity") +
+  theme_minimal()
 
 

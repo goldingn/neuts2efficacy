@@ -103,7 +103,7 @@ predict_ve_scenarios <- function(scenarios, neut_model, draws, omicron = FALSE, 
       nsim = 3
     )
   }
-  names(preds <- params)
+  names(preds) <- names(params)
 
   pred_df <- do.call(
     bind_rows,
