@@ -11,6 +11,10 @@
 prep_ve_data_for_modelling <- function(ve_estimates) {
 
   ve_estimates %>%
+    filter(
+      variant == "delta",
+      product != "mRNA booster"
+    ) %>%
     mutate(
       # ensure VE upper bounds are not be 100% (rounding error)
       across(

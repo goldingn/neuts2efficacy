@@ -17,9 +17,9 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # record unique values of levels; parameter orders correspond to these
   lookups <- list(
-    outcome = unique(ve_estimates$outcome),
-    dose = unique(ve_estimates$dose),
-    product = unique(ve_estimates$product)
+    outcome = unique(ve_data_modelling$outcome),
+    dose = unique(ve_data_modelling$dose),
+    product = unique(ve_data_modelling$product)
   )
 
   # get indices to various objects to get everything in the correct order for
@@ -30,6 +30,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
     product_idx = match(ve_data_modelling$product, lookups$product),
     neut_ratio_vaccine_idx = match(neut_ratios_vaccine$product, lookups$product)
   )
+
   indices$vaccine_idx <- cbind(
     indices$product_idx,
     indices$doses_idx
