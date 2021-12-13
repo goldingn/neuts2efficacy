@@ -21,10 +21,10 @@ format_parameters <- function(neut_model, draws) {
     neut_model$model_objects$peak_mean_log10_neuts[1],
     neut_model$model_objects$peak_mean_log10_neuts[2],
     neut_model$model_objects$peak_mean_log10_neuts[3],
-    neut_model$model_objects$peak_mean_log10_neuts[4]
+    neut_model$model_objects$peak_mean_log10_neuts[4],
+    neut_model$model_objects$peak_mean_log10_neuts[5]
   )
   names(neut_params) <- paste0("log10_mean_neut_", neut_model$lookups$immunity)
-  neut_params$log10_mean_neut_Pfizer_dose_3 <- neut_params$log10_mean_neut_Pfizer_dose_2 * 5
   neut_params$log10_mean_neut_infection <- neut_params$log10_mean_neut_Pfizer_dose_2 * 0
 
   other_params <- neut_model$model_objects[c("log_k", "neut_decay")]

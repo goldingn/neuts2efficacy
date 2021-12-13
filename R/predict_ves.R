@@ -10,21 +10,14 @@
 #' @export
 predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
 
-  # uncertain multiplier for booster doses (mean 5-fold, 95% CI 3 to 7-fold)
-  booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
-  log10_booster_multipler <- log10(booster_multiplier)
-
-  az_idx <- neut_model$lookups$product == "AZ"
-  pfizer_idx <- neut_model$lookups$product == "Pfizer"
-
   log10_neuts_list <- list(
     neut_model$model_objects$peak_mean_log10_neuts[1],
     neut_model$model_objects$peak_mean_log10_neuts[2],
     neut_model$model_objects$peak_mean_log10_neuts[3],
-    neut_model$model_objects$peak_mean_log10_neuts[4]
+    neut_model$model_objects$peak_mean_log10_neuts[4],
+    neut_model$model_objects$peak_mean_log10_neuts[5]
   )
   names(log10_neuts_list) <- neut_model$lookups$immunity
-  log10_neuts_list$booster <- log10_neuts_list$Pfizer_dose_2 * 5
   log10_neuts_list$infection <- log10_neuts_list$Pfizer_dose_2 * 0
 
   # prepare for prediction
@@ -99,7 +92,7 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
         immunity == "AZ_dose_1" ~ "AZ vaccine dose 1",
         immunity == "Pfizer_dose_2" ~ "Pfizer vaccine dose 2",
         immunity == "Pfizer_dose_1" ~ "Pfizer vaccine dose 1",
-        immunity == "booster" ~ "mRNA booster",
+        immunity == "mRNA_booster" ~ "mRNA booster",
         immunity == "infection" ~ "Infection"
       )
     )

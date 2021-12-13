@@ -12,12 +12,15 @@ prep_ve_data_for_modelling <- function(ve_estimates) {
 
   ve_estimates %>%
     filter(
-      variant == "delta",
-      product != "mRNA booster"
+      variant == "delta"
     ) %>%
     mutate(
       # combine product and dose
       immunity = sprintf("%s_dose_%s", product, dose),
+      immunity = case_when(
+        immunity == "mRNA booster_dose_3" ~ "mRNA_booster",
+        TRUE ~ immunity
+      ),
       .after = dose
     ) %>%
     mutate(

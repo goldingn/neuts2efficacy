@@ -51,6 +51,10 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # c50s for different outcomes
   c50s <- normal(0, 1, dim = 5)
 
+  # a fold multiplier for mRNA booster relative to Pfizer dose 2
+  # (mean 5-fold, 95% CI 3 to 7-fold)
+  booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
+
   # mean log10 peak neuts for second doses of AZ and Pfizer use the Khoury mean
   # (of the log10 ratio to convalescent) and standard error (of the ratio to
   # convalescent)
@@ -66,9 +70,12 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # mean log10 peak neuts for first doses of AZ and Pfizer respectively
   dose_1_mean_log10_neuts <- dose_2_mean_log10_neuts - dose_2_vs_1_mean_log10_neut_increase
 
+  # and for a booster
+  booster_mean_log10_neuts <- dose_2_mean_log10_neuts[2] + log10(booster_multiplier)
+
   # define these doses as AZ first, then Pfizer, and ensure the order is correct when comparing to data
-  peak_mean_log10_neuts_unordered <- c(dose_1_mean_log10_neuts, dose_2_mean_log10_neuts)
-  neuts_order <- match(c("AZ_dose_1", "Pfizer_dose_1", "AZ_dose_2", "Pfizer_dose_2"), lookups$immunity)
+  peak_mean_log10_neuts_unordered <- c(dose_1_mean_log10_neuts, dose_2_mean_log10_neuts, booster_mean_log10_neuts)
+  neuts_order <- match(c("AZ_dose_1", "Pfizer_dose_1", "AZ_dose_2", "Pfizer_dose_2", "mRNA_booster"), lookups$immunity)
   peak_mean_log10_neuts <- peak_mean_log10_neuts_unordered[neuts_order]
 
   # pull out vectors of parameters
@@ -111,6 +118,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # define greta model object
   greta_model <- greta::model(
+    booster_multiplier,
     log_k,
     neut_halflife,
     c50s,
@@ -120,6 +128,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # group together the model objects
   model_objects <- module(
+    booster_multiplier,
     neut_halflife,
     neut_decay,
     log_k,
