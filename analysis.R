@@ -147,6 +147,18 @@ ggsave("figures/omicron_params.png",
        height = 7,
        bg = "white")
 
+omicron_params_plot_lines <- omicron_params %>%
+  plot_omicron_params(
+    neut_fold_lines = c(3, 5, 10, 15)
+  )
+
+ggsave("figures/omicron_params_with_lines.png",
+       plot = omicron_params_plot_lines,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+
 omicron_neut_fold_plot <- plot_omicron_neut_fold(omicron_params)
 
 ggsave("figures/omicron_neut_fold.png",
@@ -155,49 +167,7 @@ ggsave("figures/omicron_neut_fold.png",
        height = 7,
        bg = "white")
 
-# summarise immune escape consistent with Sigal Lab estimates
 
-# Assuming 41.4 fold reduction relative to WT, and taking 3.9 fold reduction of
-# Delta vs WT from Deb’s paper to get 10.6 fold reduction - summarise the samples in this region
-omicron_params %>%
-  filter(
-    titre_fold > log10(10.4) & titre_fold < log10(10.8)
-  ) %>%
-  summarise(
-    mean = mean(immune_evasion),
-    sd = sd(immune_evasion),
-    n = n()
-  )
-
-# LSHTM upper (12.8)
-omicron_params %>%
-  filter(
-    titre_fold > log10(12.6) & titre_fold < log10(13)
-  ) %>%
-  summarise(
-    mean = mean(immune_evasion),
-    sd = sd(immune_evasion),
-    n = n()
-  )
-
-# LSHTM lower (5.1)
-omicron_params %>%
-  filter(
-    titre_fold > log10(4.9) & titre_fold < log10(5.3)
-  ) %>%
-  summarise(
-    mean = mean(immune_evasion),
-    sd = sd(immune_evasion),
-    n = n()
-  )
-
-# summarise from all samples
-omicron_params %>%
-  summarise(
-    mean = mean(immune_evasion),
-    sd = sd(immune_evasion),
-    n = n()
-  )
 
 # given point estimates on the avocado, compute VEs for vaccines and waning for
 # Omicron in Australia

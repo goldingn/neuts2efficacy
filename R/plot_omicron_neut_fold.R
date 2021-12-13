@@ -12,11 +12,14 @@ plot_omicron_neut_fold <- function(omicron_params) {
   omicron_params %>%
     ggplot(
       aes(
-        x = exp(titre_fold)
+        x = 10 ^ titre_fold
       )
     ) +
     geom_density(
       fill = lighten("seagreen", 0.6)
+    ) +
+    coord_cartesian(
+      xlim = c(1, 30)
     ) +
     xlab("Fold increase in antibodies required to neutralise virus") +
     ylab("Posterior density") +

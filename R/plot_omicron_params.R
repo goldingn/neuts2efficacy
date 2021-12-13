@@ -7,7 +7,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-plot_omicron_params <- function(omicron_params) {
+plot_omicron_params <- function(omicron_params, neut_fold_lines = c()) {
 
   # plot in LHSTM style
   omicron_kde <- omicron_params %>%
@@ -18,7 +18,7 @@ plot_omicron_params <- function(omicron_params) {
     ) %>%
     fit_kde()
 
-  ggplot() +
+  plot <- ggplot() +
     geom_polygon(
       aes(x, y),
       data = get_kde_contour(omicron_kde, 0.95),
@@ -45,5 +45,55 @@ plot_omicron_params <- function(omicron_params) {
     xlab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
     ylab("Omicron relative transmissibility (R0 ratio)") +
     theme_minimal()
+
+
+  if (length(neut_fold_lines > 0)) {
+
+
+    labels <- paste0(neut_fold_lines, "x")
+    evasions <- NA * neut_fold_lines
+
+    for (i in seq_along(neut_fold_lines)) {
+
+      fold <- neut_fold_lines[i]
+      evasions[i] <- omicron_params %>%
+        filter(
+          titre_fold > log10(fold - 0.2) & titre_fold < log10(fold + 0.2)
+        ) %>%
+        pull(
+          immune_evasion
+        ) %>%
+        mean()
+
+    }
+
+    line_df <- tibble(
+      fold = labels,
+      immune_evasion = evasions,
+    )
+
+    plot <- plot +
+      geom_vline(
+        aes(xintercept = immune_evasion),
+        data = line_df,
+        alpha = 0.2
+      ) +
+      geom_text(
+        aes(
+          x = immune_evasion,
+          y = 0.4,
+          label = fold
+        ),
+        data = line_df,
+        angle = 90,
+        vjust = -0.2,
+        hjust = 0,
+        size = 3,
+        alpha = 0.4
+      )
+
+  }
+
+  plot
 
 }
