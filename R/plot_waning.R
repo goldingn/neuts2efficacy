@@ -98,7 +98,8 @@ plot_waning <- function(ve_predictions,
           product == "AZ" & dose == 2 ~ "AZ vaccine dose 2",
           product == "AZ" & dose == 1 ~ "AZ vaccine dose 1",
           product == "Pfizer" & dose == 2 ~ "Pfizer vaccine dose 2",
-          product == "Pfizer" & dose == 1 ~ "Pfizer vaccine dose 1"
+          product == "Pfizer" & dose == 1 ~ "Pfizer vaccine dose 1",
+          dose == 3 ~ "mRNA booster"
         )
       ) %>%
       mutate(

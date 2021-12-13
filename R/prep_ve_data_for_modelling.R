@@ -16,7 +16,12 @@ prep_ve_data_for_modelling <- function(ve_estimates) {
       product != "mRNA booster"
     ) %>%
     mutate(
-      # ensure VE upper bounds are not be 100% (rounding error)
+      # combine product and dose
+      immunity = sprintf("%s_dose_%s", product, dose),
+      .after = dose
+    ) %>%
+    mutate(
+      # ensure VE upper bounds are not 100% (rounding error)
       across(
         starts_with("ve"),
         ~pmin(.x, 0.99)

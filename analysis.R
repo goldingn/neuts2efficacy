@@ -30,7 +30,6 @@ summarise_fit(draws) %>%
 format_parameters(neut_model, draws) %>%
   as.data.frame()
 
-
 trace_plot <- bayesplot::mcmc_trace(draws)
 ggsave("figures/mcmc_trace.png",
        plot = trace_plot,
@@ -104,6 +103,30 @@ waning_plot_omicron <- plot_waning(
 
 ggsave("figures/ve_waning_omicron.png",
        plot = waning_plot_omicron,
+       width = 9,
+       height = 6,
+       bg = "white")
+
+# get preliminary VEs for Omicron from Andrews
+ve_estimates_omicron <- get_ve_estimates() %>%
+  filter(
+    variant == "omicron",
+    dose > 1
+  )
+
+waning_plot_omicron_data <- plot_waning(
+  ve_predictions_omicron,
+  ve_estimates_omicron,
+  immunity_levels = c(
+    "mRNA booster",
+    "Pfizer vaccine dose 2",
+    "AZ vaccine dose 2")
+) +
+  ggtitle("Predicted waning in vaccine efficacy",
+          "against the Omicron variant")
+
+ggsave("figures/ve_waning_omicron_with_data.png",
+       plot = waning_plot_omicron_data,
        width = 9,
        height = 6,
        bg = "white")

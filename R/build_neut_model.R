@@ -18,22 +18,15 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # record unique values of levels; parameter orders correspond to these
   lookups <- list(
     outcome = unique(ve_data_modelling$outcome),
-    dose = unique(ve_data_modelling$dose),
-    product = unique(ve_data_modelling$product)
+    immunity = unique(ve_data_modelling$immunity)
   )
 
   # get indices to various objects to get everything in the correct order for
   # prediction
   indices <- list(
     outcomes_idx = match(ve_data_modelling$outcome, lookups$outcome),
-    doses_idx = match(ve_data_modelling$dose, lookups$dose),
-    product_idx = match(ve_data_modelling$product, lookups$product),
-    neut_ratio_vaccine_idx = match(neut_ratios_vaccine$product, lookups$product)
-  )
-
-  indices$vaccine_idx <- cbind(
-    indices$product_idx,
-    indices$doses_idx
+    immunity_idx = match(ve_data_modelling$immunity, lookups$immunity),
+    neut_ratio_vaccine_idx = match(neut_ratios_vaccine$immunity, lookups$immunity)
   )
 
   # define greta model
@@ -73,11 +66,10 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # mean log10 peak neuts for first doses of AZ and Pfizer respectively
   dose_1_mean_log10_neuts <- dose_2_mean_log10_neuts - dose_2_vs_1_mean_log10_neut_increase
 
-  # matrix of dose-by-product neuts for lookup; rows are products, columns are
-  # doses
-  vaccine_peak_mean_log10_neuts_mat <- cbind(
-    dose_1_mean_log10_neuts, dose_2_mean_log10_neuts
-  )
+  # define these doses as AZ first, then Pfizer, and ensure the order is correct when comparing to data
+  peak_mean_log10_neuts_unordered <- c(dose_1_mean_log10_neuts, dose_2_mean_log10_neuts)
+  neuts_order <- match(c("AZ_dose_1", "Pfizer_dose_1", "AZ_dose_2", "Pfizer_dose_2"), lookups$immunity)
+  peak_mean_log10_neuts <- peak_mean_log10_neuts_unordered[neuts_order]
 
   # pull out vectors of parameters
 
@@ -85,7 +77,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   c50_vec <- c50s[indices$outcomes_idx]
 
   # get peak mean log10 neut titres for each vaccine
-  peak_mean_log10_neut_vec <- vaccine_peak_mean_log10_neuts_mat[indices$vaccine_idx]
+  peak_mean_log10_neut_vec <- peak_mean_log10_neuts[indices$immunity_idx]
 
   # compute expected values on given days post peak
   mean_log10_neut_vec <- log10_neut_over_time(
@@ -136,7 +128,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
     sd_log10_neut_titres,
     dose_2_mean_log10_neuts,
     dose_1_mean_log10_neuts,
-    vaccine_peak_mean_log10_neuts_mat,
+    peak_mean_log10_neuts,
     ve_expected,
     ve_logit_obs_sd
   )

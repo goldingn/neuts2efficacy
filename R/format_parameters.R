@@ -17,14 +17,13 @@ format_parameters <- function(neut_model, draws) {
     c50_params[[name]] <- neut_model$model_objects$c50s[i]
   }
 
-  product <- neut_model$lookups$product
-
   neut_params <- list(
-    log10_mean_neut_AZ_dose_1 = neut_model$model_objects$dose_1_mean_log10_neuts[product == "AZ"],
-    log10_mean_neut_AZ_dose_2 = neut_model$model_objects$dose_2_mean_log10_neuts[product == "AZ"],
-    log10_mean_neut_Pfizer_dose_1 = neut_model$model_objects$dose_1_mean_log10_neuts[product == "Pfizer"],
-    log10_mean_neut_Pfizer_dose_2 = neut_model$model_objects$dose_2_mean_log10_neuts[product == "Pfizer"]
+    neut_model$model_objects$peak_mean_log10_neuts[1],
+    neut_model$model_objects$peak_mean_log10_neuts[2],
+    neut_model$model_objects$peak_mean_log10_neuts[3],
+    neut_model$model_objects$peak_mean_log10_neuts[4]
   )
+  names(neut_params) <- paste0("log10_mean_neut_", neut_model$lookups$immunity)
   neut_params$log10_mean_neut_Pfizer_dose_3 <- neut_params$log10_mean_neut_Pfizer_dose_2 * 5
   neut_params$log10_mean_neut_infection <- neut_params$log10_mean_neut_Pfizer_dose_2 * 0
 

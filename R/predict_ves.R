@@ -17,16 +17,17 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
   az_idx <- neut_model$lookups$product == "AZ"
   pfizer_idx <- neut_model$lookups$product == "Pfizer"
 
-  # prepare for prediction
   log10_neuts_list <- list(
-    az_dose_1 = neut_model$model_objects$dose_1_mean_log10_neuts[az_idx],
-    az_dose_2 = neut_model$model_objects$dose_2_mean_log10_neuts[az_idx],
-    pfizer_dose_1 = neut_model$model_objects$dose_1_mean_log10_neuts[pfizer_idx],
-    pfizer_dose_2 = neut_model$model_objects$dose_2_mean_log10_neuts[pfizer_idx],
-    booster = neut_model$model_objects$dose_2_mean_log10_neuts[pfizer_idx] +
-      log10_booster_multipler,
-    infection = 0
+    neut_model$model_objects$peak_mean_log10_neuts[1],
+    neut_model$model_objects$peak_mean_log10_neuts[2],
+    neut_model$model_objects$peak_mean_log10_neuts[3],
+    neut_model$model_objects$peak_mean_log10_neuts[4]
   )
+  names(log10_neuts_list) <- neut_model$lookups$immunity
+  log10_neuts_list$booster <- log10_neuts_list$Pfizer_dose_2 * 5
+  log10_neuts_list$infection <- log10_neuts_list$Pfizer_dose_2 * 0
+
+  # prepare for prediction
 
   # if we are predicting for omicron, add the omicron adjustment to the log10
   # neuts
@@ -42,6 +43,7 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
 
   }
 
+  # overwrite the lookup, with these new ones added on
   lookups <- neut_model$lookups
   lookups$immunity <- names(log10_neuts_list)
   peak_mean_log10_neuts_all <- do.call(c, log10_neuts_list)
@@ -93,10 +95,10 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
     ) %>%
     mutate(
       immunity_type = case_when(
-        immunity == "az_dose_2" ~ "AZ vaccine dose 2",
-        immunity == "az_dose_1" ~ "AZ vaccine dose 1",
-        immunity == "pfizer_dose_2" ~ "Pfizer vaccine dose 2",
-        immunity == "pfizer_dose_1" ~ "Pfizer vaccine dose 1",
+        immunity == "AZ_dose_2" ~ "AZ vaccine dose 2",
+        immunity == "AZ_dose_1" ~ "AZ vaccine dose 1",
+        immunity == "Pfizer_dose_2" ~ "Pfizer vaccine dose 2",
+        immunity == "Pfizer_dose_1" ~ "Pfizer vaccine dose 1",
         immunity == "booster" ~ "mRNA booster",
         immunity == "infection" ~ "Infection"
       )
