@@ -17,6 +17,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # record unique values of levels; parameter orders correspond to these
   lookups <- list(
+    variant = unique(ve_data_modelling$variant),
     outcome = unique(ve_data_modelling$outcome),
     immunity = unique(ve_data_modelling$immunity)
   )
@@ -24,6 +25,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # get indices to various objects to get everything in the correct order for
   # prediction
   indices <- list(
+    variant_idx = match(ve_data_modelling$variant, lookups$variant),
     outcomes_idx = match(ve_data_modelling$outcome, lookups$outcome),
     immunity_idx = match(ve_data_modelling$immunity, lookups$immunity),
     neut_ratio_vaccine_idx = match(neut_ratios_vaccine$immunity, lookups$immunity)
@@ -55,6 +57,17 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # (mean 5-fold, 95% CI 3 to 7-fold)
   booster_multiplier <- normal(5, 1, truncation = c(0, Inf))
 
+  # a fold multiplier for neuts against Omicron, relative to Dellta. Expect this
+  # to be negative (less effect against Omicron), but don't constrain it.
+  omicron_log10_neut_fold <- normal(0, 1)
+
+  # combine into vector
+  delta_log10_neut_fold <- zeros(1)
+
+  variant_log10_neut_fold_unordered <- c(omicron_log10_neut_fold, delta_log10_neut_fold)
+  variant_order <- match(c("omicron", "delta"), lookups$variant)
+  variant_log10_neut_fold <- variant_log10_neut_fold_unordered[variant_order]
+
   # mean log10 peak neuts for second doses of AZ and Pfizer use the Khoury mean
   # (of the log10 ratio to convalescent) and standard error (of the ratio to
   # convalescent)
@@ -83,8 +96,9 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   # expand out the c50 parameters to match the data
   c50_vec <- c50s[indices$outcomes_idx]
 
-  # get peak mean log10 neut titres for each vaccine
-  peak_mean_log10_neut_vec <- peak_mean_log10_neuts[indices$immunity_idx]
+  # get peak mean log10 neut titres for each vaccine and variant
+  peak_mean_log10_neut_vec <- peak_mean_log10_neuts[indices$immunity_idx] +
+    variant_log10_neut_fold[indices$variant_idx]
 
   # compute expected values on given days post peak
   mean_log10_neut_vec <- log10_neut_over_time(
@@ -118,6 +132,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # define greta model object
   greta_model <- greta::model(
+    omicron_log10_neut_fold,
     booster_multiplier,
     log_k,
     neut_halflife,
@@ -128,6 +143,8 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # group together the model objects
   model_objects <- module(
+    omicron_log10_neut_fold,
+    variant_log10_neut_fold,
     booster_multiplier,
     neut_halflife,
     neut_decay,

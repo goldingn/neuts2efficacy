@@ -35,8 +35,8 @@ get_ve_estimates <- function() {
       !(source == "andrews_omicron" & product == "AZ")
     ) %>%
     mutate(
-      # make all VE lower bounds positive (negative point estimates removed)
-      ve_lower = pmax(ve_lower, 0),
+      # make all VE lower bounds positive at lowest reposrted resolution
+      ve_lower = pmax(ve_lower, 0.001),
       # recode boosters as the same product (assume same VEs)
       product = case_when(
         dose == 3 ~ "mRNA booster",

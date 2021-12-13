@@ -27,7 +27,7 @@ format_parameters <- function(neut_model, draws) {
   names(neut_params) <- paste0("log10_mean_neut_", neut_model$lookups$immunity)
   neut_params$log10_mean_neut_infection <- neut_params$log10_mean_neut_Pfizer_dose_2 * 0
 
-  other_params <- neut_model$model_objects[c("log_k", "neut_decay")]
+  other_params <- neut_model$model_objects[c("log_k", "neut_decay", "omicron_log10_neut_fold")]
 
   params <- c(c50_params, neut_params, other_params)
   param_names <- as.list(names(params))

@@ -37,6 +37,10 @@ plot_waning <- function(ve_predictions,
     ) %>%
     mutate(
       outcome = str_to_sentence(outcome),
+      outcome = case_when(
+        outcome == "Transmission" ~ "Onward transmission",
+        TRUE ~ outcome
+      ),
       outcome = factor(
         outcome,
         levels = c(
@@ -44,7 +48,7 @@ plot_waning <- function(ve_predictions,
           "Hospitalisation",
           "Symptoms",
           "Acquisition",
-          "Transmission"
+          "Onward transmission"
         )
       ),
       immunity_type = factor(
@@ -104,6 +108,10 @@ plot_waning <- function(ve_predictions,
       ) %>%
       mutate(
         outcome = str_to_sentence(outcome),
+        outcome = case_when(
+          outcome == "Transmission" ~ "Onward transmission",
+          TRUE ~ outcome
+        ),
         outcome = factor(
           outcome,
           levels = c(
@@ -111,7 +119,7 @@ plot_waning <- function(ve_predictions,
             "Hospitalisation",
             "Symptoms",
             "Acquisition",
-            "Transmission"
+            "Onward transmission"
           )
         )
       )

@@ -10,8 +10,8 @@
 # add Omicron model components to the basic model
 add_omicron_model <- function(neut_model) {
 
-  # define parameter for fold of neuts relative to main model. Expect this to be negative (less effect)
-  omicron_log10_neut_fold <- normal(0, 1)
+  # get the omicron neut fold
+  omicron_log10_neut_fold <- neut_model$model_objects$omicron_log10_neut_fold
 
   # define parameter for ratio of R0s (omicron / delta) with mode of 1
   R0_ratio <- normal(1, 1, truncation = c(0, Inf))

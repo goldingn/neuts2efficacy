@@ -18,9 +18,6 @@ plot_omicron_neut_fold <- function(omicron_params) {
     geom_density(
       fill = lighten("seagreen", 0.6)
     ) +
-    coord_cartesian(
-      xlim = c(1, 10)
-    ) +
     xlab("Fold increase in antibodies required to neutralise virus") +
     ylab("Posterior density") +
     ggtitle(

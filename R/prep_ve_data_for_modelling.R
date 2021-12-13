@@ -11,9 +11,6 @@
 prep_ve_data_for_modelling <- function(ve_estimates) {
 
   ve_estimates %>%
-    filter(
-      variant == "delta"
-    ) %>%
     mutate(
       # combine product and dose
       immunity = sprintf("%s_dose_%s", product, dose),

@@ -30,6 +30,7 @@ plot_omicron_params <- function(omicron_params) {
       fill = lighten("seagreen", 0.1)
     ) +
     scale_x_continuous(
+      limits = c(0, 1),
       labels = scales::percent
     ) +
     geom_hline(

@@ -74,7 +74,10 @@ ggsave("figures/ve_waning_delta.png",
        height = 6,
        bg = "white")
 
-waning_plot_delta_data <- plot_waning(ve_predictions_delta, neut_model$ve_data_modelling) +
+delta_ve_data <- neut_model$ve_data_modelling %>%
+  filter(variant == "delta")
+
+waning_plot_delta_data <- plot_waning(ve_predictions_delta, delta_ve_data) +
   ggtitle("Predicted waning in vaccine efficacy",
           "against the Delta variant")
 
@@ -108,15 +111,16 @@ ggsave("figures/ve_waning_omicron.png",
        bg = "white")
 
 # get preliminary VEs for Omicron from Andrews
-ve_estimates_omicron <- get_ve_estimates() %>%
+omicron_ve_data <- neut_model$ve_data_modelling %>%
   filter(
     variant == "omicron",
+    # drop dose 1 as we won't plot the ribbon
     dose > 1
   )
 
 waning_plot_omicron_data <- plot_waning(
   ve_predictions_omicron,
-  ve_estimates_omicron,
+  omicron_ve_data,
   immunity_levels = c(
     "mRNA booster",
     "Pfizer vaccine dose 2",
@@ -157,7 +161,7 @@ ggsave("figures/omicron_neut_fold.png",
 # Delta vs WT from Deb’s paper to get 10.6 fold reduction - summarise the samples in this region
 omicron_params %>%
   filter(
-    titre_fold > log10(10.2) & titre_fold < log10(11)
+    titre_fold > log10(10.4) & titre_fold < log10(10.8)
   ) %>%
   summarise(
     mean = mean(immune_evasion),
@@ -165,10 +169,21 @@ omicron_params %>%
     n = n()
   )
 
-# Ciesek estimates
+# LSHTM upper (12.8)
 omicron_params %>%
   filter(
-    titre_fold > log10(36.5) & titre_fold < log10(37.5)
+    titre_fold > log10(12.6) & titre_fold < log10(13)
+  ) %>%
+  summarise(
+    mean = mean(immune_evasion),
+    sd = sd(immune_evasion),
+    n = n()
+  )
+
+# LSHTM lower (5.1)
+omicron_params %>%
+  filter(
+    titre_fold > log10(4.9) & titre_fold < log10(5.3)
   ) %>%
   summarise(
     mean = mean(immune_evasion),
@@ -183,7 +198,6 @@ omicron_params %>%
     sd = sd(immune_evasion),
     n = n()
   )
-
 
 # given point estimates on the avocado, compute VEs for vaccines and waning for
 # Omicron in Australia
