@@ -11,14 +11,19 @@
 # get joint posterior samples of Omicron parameters
 sim_omicron_params <- function(neut_model, draws,
                                n = 1e4,
-                               baseline_immunity = "Pfizer_dose_2") {
+                               baseline_immunity = "Pfizer_dose_2",
+                               days_waning = 0) {
 
   # recompute VEs against transmission for Omicron and Delta, to remove the
   # effect of waning
   za_distancing_effect <- neut_model$model_objects$za_distancing_effect
   omicron_log10_neut_fold <- neut_model$model_objects$omicron_log10_neut_fold
 
-  evasion <- immune_evasion(neut_model, baseline_immunity = baseline_immunity)
+  evasion <- immune_evasion(
+    neut_model = neut_model,
+    baseline_immunity = baseline_immunity,
+    days_waning = days_waning
+  )
 
   # other ratios
   R0 <- 6 * neut_model$model_objects$R0_ratio

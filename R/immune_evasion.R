@@ -8,28 +8,39 @@
 #' @author Nick Golding
 #' @export
 # get the degree of immune evasion (among the vaccinated) from the neut model
-immune_evasion <- function(neut_model,
-                           baseline_immunity = c("za",
-                                                 "AZ_dose_2",
-                                                 "Pfizer_dose_2",
-                                                 "AZ_dose_1",
-                                                 "Pfizer_dose_1",
-                                                 "mRNA_booster")) {
+immune_evasion <- function(
+  neut_model,
+  baseline_immunity = c(
+    "za",
+    "AZ_dose_2",
+    "Pfizer_dose_2",
+    "AZ_dose_1",
+    "Pfizer_dose_1",
+    "mRNA_booster"
+  ),
+  days_waning = 0
+) {
 
   baseline_immunity <- match.arg(baseline_immunity)
 
   # either the South African immunity, immunity from WT infection, or vaccine derived immunity
   if (baseline_immunity == "za") {
     # find the inferred level of immunity in ZA
-    baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold
+    peak_baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold
   } else if (baseline_immunity == "infection"){
     # set to 0 for WT immunity
-    baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold * 0
+    peak_baseline_immunity_log10_neut_fold <- neut_model$model_objects$za_baseline_immunity_log10_neut_fold * 0
   } else {
     # find the corresponding vaccine-derived immunity
     idx <- match(baseline_immunity, neut_model$lookups$immunity)
-    baseline_immunity_log10_neut_fold <- neut_model$model_objects$peak_mean_log10_neuts[idx]
+    peak_baseline_immunity_log10_neut_fold <- neut_model$model_objects$peak_mean_log10_neuts[idx]
   }
+
+  baseline_immunity_log10_neut_fold <- log10_neut_over_time(
+    time = days_waning,
+    maximum_log10_neut = peak_baseline_immunity_log10_neut_fold,
+    decay = neut_model$model_objects$neut_decay
+  )
 
   # fold change for omicron
   omicron_log10_neut_fold <- neut_model$model_objects$omicron_log10_neut_fold

@@ -159,6 +159,69 @@ ggsave("figures/omicron_params_with_lines.png",
        bg = "white")
 
 
+# wrap up these waned immune evasions in a plot
+
+# do the same but for a cohort with the same level of immunity as AZ dose 1 (or
+# AZ dose 2 waned by 6 months)
+omicron_params_plot_AZ_2_180d <- sim_omicron_params(
+  neut_model,
+  draws,
+  baseline_immunity = "AZ_dose_2",
+  days_waning = 180
+) %>%
+  plot_omicron_params()
+
+ggsave("figures/omicron_params_az2_180d.png",
+       plot = omicron_params_plot_AZ_2_180d,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+# for Pfizer dose 1
+omicron_params_plot_Pfizer_2_180d <- sim_omicron_params(
+  neut_model,
+  draws,
+  baseline_immunity = "Pfizer_dose_2",
+  days_waning = 180
+) %>%
+  plot_omicron_params()
+
+ggsave("figures/omicron_params_pf_2_180d.png",
+       plot = omicron_params_plot_Pfizer_2_180d,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+# and for booster
+omicron_params_plot_booster_0d <- sim_omicron_params(
+  neut_model,
+  draws,
+  baseline_immunity = "mRNA_booster",
+  days_waning = 0
+) %>%
+  plot_omicron_params()
+
+ggsave("figures/omicron_params_booster_0d.png",
+       plot = omicron_params_plot_booster_0d,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+omicron_params_plot_booster_180d <- sim_omicron_params(
+  neut_model,
+  draws,
+  baseline_immunity = "mRNA_booster",
+  days_waning = 180
+) %>%
+  plot_omicron_params()
+
+ggsave("figures/omicron_params_booster_180d.png",
+       plot = omicron_params_plot_booster_180d,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+
 omicron_neut_fold_plot <- plot_omicron_neut_fold(omicron_params)
 
 ggsave("figures/omicron_neut_fold.png",
