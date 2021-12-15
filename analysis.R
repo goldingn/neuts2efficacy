@@ -358,3 +358,139 @@ ve_predictions_omicron_scenarios %>%
   theme_minimal()
 
 
+# show how immune evasion to VE for overall transmission increases with waning
+
+omicron_ves <- read_csv(
+  "outputs/ve_waning_predictions_omicron_scenarios.csv",
+  col_types = cols(
+    scenario = col_character(),
+    outcome = col_character(),
+    immunity = col_character(),
+    days = col_double(),
+    immunity_type = col_character(),
+    ve = col_double()
+  )
+) %>%
+  filter(
+    scenario == "intermediate"
+  ) %>%
+  select(
+    outcome,
+    immunity,
+    days,
+    ve
+  )
+
+delta_ves <- read_csv(
+  "outputs/ve_waning_predictions_delta.csv",
+  col_types = cols(
+    outcome = col_character(),
+    immunity = col_character(),
+    days = col_double(),
+    ve_predict_mean = col_double(),
+    ve_predict_sd = col_double(),
+    ve_predict_lower_50 = col_double(),
+    ve_predict_upper_50 = col_double(),
+    ve_predict_lower_90 = col_double(),
+    ve_predict_upper_90 = col_double(),
+    immunity_type = col_character()
+  )
+) %>%
+  select(
+    outcome,
+    immunity,
+    days,
+    ve = ve_predict_mean
+  )
+
+evasion_plot <- bind_rows(
+  omicron = omicron_ves,
+  delta = delta_ves,
+  .id = "variant"
+) %>%
+  filter(
+    outcome %in% c("acquisition", "transmission")
+  ) %>%
+  pivot_wider(
+    names_from = outcome,
+    values_from = ve
+  ) %>%
+  mutate(
+    overall = 1 - ((1 - acquisition) * (1 - transmission))
+  ) %>%
+  select(
+    -acquisition,
+    -transmission
+  ) %>%
+  pivot_wider(
+    names_from = variant,
+    values_from = overall
+  ) %>%
+  mutate(
+    evasion = 1 - omicron / delta
+  ) %>%
+  mutate(
+    immunity = factor(
+      immunity,
+      levels = c(
+        "AZ_dose_1",
+        "Pfizer_dose_1",
+        "AZ_dose_2",
+        "infection",
+        "Pfizer_dose_2",
+        "mRNA_booster"
+      ),
+      labels = c(
+        "AZ dose 1",
+        "Pfizer dose 1",
+        "AZ dose 2",
+        "Infection",
+        "Pfizer dose 2",
+        "mRNA booster"
+      )
+    )
+  ) %>%
+  ggplot(
+    aes(
+      x = days,
+      y = evasion,
+      colour = immunity
+    )
+  ) +
+  geom_line(
+    size = 2
+  ) +
+  scale_y_continuous(
+    labels = scales::percent,
+    limits = c(0, 1)
+  ) +
+  ylab("Reduction in overall VE against transmission") +
+  xlab("Days since peak immunity") +
+  ggtitle("Omicron immune evasion as a function of immunity") +
+  theme_minimal()
+
+ggsave(
+  "figures/evasion_vs_immunity.png",
+  evasion_plot,
+  width = 7,
+  height = 7,
+  bg = "white"
+)
+
+
+
+omicron_params_plot_za_120d <- sim_omicron_params(
+  neut_model,
+  draws,
+  baseline_immunity = "za",
+  days_waning = 120
+) %>%
+  plot_omicron_params(
+    neut_fold_lines = c(3, 5, 10, 15)
+  )
+
+ggsave("figures/omicron_params_za_120d.png",
+       plot = omicron_params_plot_za_120d,
+       width = 7,
+       height = 7,
+       bg = "white")
