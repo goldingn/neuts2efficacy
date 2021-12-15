@@ -167,15 +167,53 @@ ggsave("figures/omicron_neut_fold.png",
        height = 7,
        bg = "white")
 
-
-
 # given point estimates on the avocado, compute VEs for vaccines and waning for
 # Omicron in Australia
 omicron_scenarios <- tibble::tribble(
   ~scenario, ~R0_ratio_target, ~immune_evasion_target,
-  "high_R0", 1.1, 0.25,
-  "intermediate", 0.65, 0.5,
-  "high_evasion", 0.5, 0.8
+  "pessimistic", 1.1, 0.5,
+  "intermediate", 0.85, 0.3,
+  "optimistic", 0.6, 0.1
+)
+
+omicron_params_plot_points <- omicron_params_plot +
+  geom_point(
+    aes(
+      x = immune_evasion_target,
+      y = R0_ratio_target
+    ),
+    data = omicron_scenarios
+  ) +
+  geom_text(
+    aes(
+      x = immune_evasion_target,
+      y = R0_ratio_target,
+      label = scenario
+    ),
+    data = omicron_scenarios,
+    vjust = 0,
+    nudge_y = 0.02
+  ) +
+  coord_cartesian(
+    xlim = c(0, 0.6)
+  )
+
+ggsave("figures/omicron_params_with_points.png",
+       plot = omicron_params_plot_points,
+       width = 7,
+       height = 7,
+       bg = "white")
+
+# get IBM parameter vallues for these scenarios
+scenario_parameters <- format_scenario_parameters(
+  neut_model = neut_model,
+  draws = draws,
+  scenarios = omicron_scenarios
+)
+
+write_csv(
+  scenario_parameters,
+  "outputs/scenario_parameters_omicron.csv"
 )
 
 ve_predictions_omicron_scenarios <- predict_ve_scenarios(
@@ -196,9 +234,9 @@ ve_predictions_omicron_scenarios %>%
     scenario = factor(
       scenario,
       levels = c(
-        "high_R0",
+        "pessimistic",
         "intermediate",
-        "high_evasion"
+        "optimistic"
       )
     ),
     outcome = factor(
@@ -209,17 +247,32 @@ ve_predictions_omicron_scenarios %>%
         "symptoms",
         "acquisition",
         "transmission"
-      )
+      ),
+      labels = c(
+        "Death",
+        "Hospitalisation",
+        "Symptoms",
+        "Acquisition",
+        "Onward transmission"
+      ),
     ),
     immunity = factor(
       immunity,
       levels = c(
-        "booster",
-        "pfizer_dose_2",
+        "mRNA_booster",
+        "Pfizer_dose_2",
         "infection",
-        "az_dose_2",
-        "pfizer_dose_1",
-        "az_dose_1"
+        "AZ_dose_2",
+        "Pfizer_dose_1",
+        "AZ_dose_1"
+      ),
+      labels = c(
+        "mRNA booster",
+        "Pfizer dose 2",
+        "Infection",
+        "AZ dose 2",
+        "Pfizer dose 1",
+        "AZ dose 1"
       )
     )
   ) %>%

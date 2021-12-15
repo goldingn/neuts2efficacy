@@ -16,7 +16,7 @@ plot_waning <- function(ve_predictions,
                           "Pfizer vaccine dose 1",
                           "AZ vaccine dose 2",
                           "AZ vaccine dose 1",
-                          "WT Infection"
+                          "Infection"
                         )
                         ) {
 

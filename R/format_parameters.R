@@ -9,7 +9,11 @@
 #' @author Nick Golding
 #' @export
 # summarise parameters for further modelling
-format_parameters <- function(neut_model, draws) {
+format_parameters <- function(neut_model,
+                              draws,
+                              summarise = TRUE,
+                              n_sim = 1e4,
+                              include_immune_evasion = FALSE) {
 
   c50_params <- list()
   for(i in seq_along(neut_model$lookups$outcome)) {
@@ -27,8 +31,20 @@ format_parameters <- function(neut_model, draws) {
   names(neut_params) <- paste0("log10_mean_neut_", neut_model$lookups$immunity)
   neut_params$log10_mean_neut_infection <- neut_params$log10_mean_neut_Pfizer_dose_2 * 0
 
-  other_params <- neut_model$model_objects[c("log_k", "neut_decay", "omicron_log10_neut_fold")]
+  other_param_names <- c(
+    "log_k",
+    "neut_decay",
+    "omicron_log10_neut_fold",
+    "R0_ratio"
+  )
+  other_params <- neut_model$model_objects[other_param_names]
 
+  # optionally calculate the South African immune evasion parameter
+  if (include_immune_evasion) {
+    other_params$za_immune_evasion = immune_evasion(neut_model)
+  }
+
+  # combine them
   params <- c(c50_params, neut_params, other_params)
   param_names <- as.list(names(params))
 
@@ -38,18 +54,36 @@ format_parameters <- function(neut_model, draws) {
       params,
       list(
         values = draws,
-        nsim = 1e4
+        nsim = n_sim
       )
     )
   )
 
-  # get means
-  params <- vapply(param_sims, mean, FUN.VALUE = numeric(1))
+  if (summarise) {
 
-  # add on the SD of neut titres
-  c(
-    params,
-    sd_log10_neut_titres = neut_model$model_objects$sd_log10_neut_titres
-  )
+    # get means
+    params <- vapply(param_sims, mean, FUN.VALUE = numeric(1))
+
+    # add on the SD of neut titres
+    res <- c(
+      params,
+      sd_log10_neut_titres = neut_model$model_objects$sd_log10_neut_titres
+    )
+
+  } else {
+
+    res <- c(
+      param_sims,
+      list(
+        sd_log10_neut_titres = rep(
+          neut_model$model_objects$sd_log10_neut_titres,
+          n_sim
+        )
+      )
+    )
+
+  }
+
+  res
 
 }
