@@ -82,7 +82,7 @@ get_vaccine_transmission_effects <- function(ves, coverage) {
     mutate(
       ngm_unvaccinated = list(australia_ngm),
       ngm_vaccinated = list(ngm_unvaccinated[[1]] * transmission_reduction_matrix[[1]]),
-      vaccination_effect_multiplier = get_R(ngm_vaccinated[[1]]) / get_R(ngm_unvaccinated[[1]])
+      vaccination_effect = 1 - get_R(ngm_vaccinated[[1]]) / get_R(ngm_unvaccinated[[1]])
     ) %>%
     select(
       -transmission_reduction_matrix,
