@@ -10,7 +10,9 @@ source("packages.R")
 vaccine_scenarios <- get_vaccine_scenarios()
 
 # calculate the cohorts as at the current date
-target_date <- as.Date("2022-01-31")
+# target_date <- as.Date("2022-01-31")
+# target_date <- as.Date("2022-03-31")
+target_date <- Sys.Date()
 vaccine_cohorts_now <- get_vaccine_cohorts_at_date(
   vaccine_scenarios,
   target_date
