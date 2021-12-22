@@ -106,7 +106,7 @@ model to update these parameters slightly based on the data, and fully
 incorporate uncertainty in these parameters into predictions.
 
 This model is fitted to estimates from [Andrews et
-al. (2021)](https://doi.org/10.1101/2021.09.15.21263583) of the
+al. (2021a)](https://doi.org/10.1101/2021.09.15.21263583) of the
 population-level efficacy of the Pfizer and AstraZeneca vaccines (two
 doses) against clinical outcomes (death, severe disease, symptomatic
 infection) from the Delta variant over different periods of time
@@ -340,6 +340,29 @@ following esxpression for the ration of reproduction numbers:
 *σ*<sub>Reff</sub> = 0.41 to match the distribution from Pearson (across
 estimates with the same and different generation intervals between
 variants.
+
+### Omicron vaccine efficacy estimates
+
+[Andrews et al. (2021b)](https://doi.org/10.1101/2021.12.14.21267615)
+provide estimates of vaccine efficacy against Omicron for different
+products, numbers of doses, and periods post-vaccination. These
+estimates provide direct information on the degree of immune escape of
+Omicron versus Delta. The provided estimates for efficacy of AstraZeneca
+vaccination against Omicron are however highly uncertain and have
+negative point estimates, and the authors note that these estimates are
+likely to be untrustworthy due to the fact that AstraZeneca vaccinees
+are more likely to be vulnerable (and so more prone to clinical
+disease). For this reason, estimates of efficacy of vaccination with the
+AstraZeneca vaccine were excluded, as were any efficacy estimates
+computed on fewer than 10 Omicron cases (e.g. Pfizer dose 2 in the
+period immediately following vaccination). Estimates are also provided
+of vaccine efficacy against Delta. Among Delta estimates, the majority
+are likely to have been computed using the same underlying data as was
+used to estimate the efficacies against clinical disease in the baseline
+model, however the efficacy estimate for booster doses against Delta is
+independent of these, and so we include this. These additional vaccine
+efficacy estimates were used to inform the model with a likelihood
+defined as described above.
 
 ### Fitting the model
 
