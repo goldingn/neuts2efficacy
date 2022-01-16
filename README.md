@@ -16,4 +16,4 @@ The omicron analysis relies on detailed, rapid analyses of the ratio of reproduc
 
 To run the code in this repo, you will need to install the packages listed in `packages.R`, including the most recent Github version of [greta](https://github.com/greta-dev/greta). greta links to python and depends on TensorFlow so can be tricky to install. It's best to follow the instructions greta gives you, and look for help on the [greta forum](https://forum.greta-stats.org/) if you have any trouble.
 
-Then you can run the script `analysis.R` to run the whole analysis; fittng the model, producing validation statristics, producing plots, and outputting predictions.
+Then you run the whole analysis using the targets package function `tar_make()` to run the whole analysis; fittng the model, producing validation statistics, producing plots, and outputting predictions.
