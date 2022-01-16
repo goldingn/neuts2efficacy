@@ -1,6 +1,5 @@
 library(targets)
-# This is an example _targets.R file. Every
-# {targets} pipeline needs one.
+
 # Use tar_script() to create _targets.R and tar_edit()
 # to open it again for editing.
 # Then, run tar_make() to run the pipeline
@@ -17,23 +16,26 @@ tar_option_set(
     "colorspace"
   )
 )
-. <- lapply(list.files("R", full.names=T), source)
+
+# load all functions
+. <- lapply(list.files("R", full.names = TRUE), source)
 
 # End this file with a list of target objects.
 list(
-  #Distributions over ratios of neut titres from Khoury et al, expressed as fold of convalescent
+
+  # distributions over ratios of neut titres from Khoury et al, expressed as fold of convalescent
   tar_target(
     neut_ratios_vaccine,
-    get_neut_ratios_vaccine()  
+    get_neut_ratios_vaccine()
   ),
 
-  #VEs against different outcomes for products, doses at different times since vaccination.
+  # VEs against different outcomes for products, doses at different times since vaccination.
   tar_target(
     ve_estimates,
     get_ve_estimates()
   ),
 
-  #Greta model of relationship between neuts and efficacies
+  # greta model of relationship between neuts and efficacies
   tar_target(
     neut_model_initial,
     build_neut_model(
@@ -42,13 +44,13 @@ list(
     )
   ),
 
-  #Adding omicron parameters
+  # adding omicron parameters
   tar_target(
     neut_model,
     add_omicron_model(neut_model_initial)
   ),
 
-  #Fit model and check convergence
+  # fit model and check convergence
   tar_target(
     draws,
     fit(neut_model)
@@ -68,7 +70,7 @@ list(
        bg = "white")
   ),
 
-  #Posterior samples of fitted VEs:
+  # posterior samples of fitted VEs:
   tar_target(
     ve_fitted_sims,
     sim_fitted_ves(
@@ -77,7 +79,7 @@ list(
     )
   ),
 
-  #Plot of fit:
+  # plot of fit:
   tar_target(
     fit_plot,
     plot_ve_fit(
@@ -95,11 +97,11 @@ list(
        bg = "white")
   ),
 
-  #Posterior predictive check on ECDF of observed VEs
+  # posterior predictive check on ECDF of observed VEs
   tar_target(
     ppc_plot,
     bayesplot::ppc_ecdf_overlay(
-      neut_model$ve_data_modelling$ve, 
+      neut_model$ve_data_modelling$ve,
       ve_fitted_sims)
   ),
 
@@ -112,7 +114,7 @@ list(
        bg = "white")
   ),
 
-  #VEs against Delta over time
+  # VEs against Delta over time
   tar_target(
     ve_predictions_delta,
     predict_ves(
@@ -154,6 +156,7 @@ list(
     ggtitle("Predicted waning in vaccine efficacy",
           "against the Delta variant")
   ),
+
   tar_target(
     save_waning_plot_delta_data,
     ggsave("figures/ve_waning_delta_with_data.png",
@@ -163,7 +166,7 @@ list(
        bg = "white")
   ),
 
-  #VE predictions for omicron
+  # VE predictions for omicron
   tar_target(
     ve_predictions_omicron,
     predict_ves(
@@ -172,6 +175,7 @@ list(
       omicron = TRUE
     )
   ),
+
   tar_target(
     save_ve_predictions_omicron,
     write_csv(
@@ -192,6 +196,7 @@ list(
       ggtitle("Predicted waning in vaccine efficacy",
               "against the Omicron variant")
   ),
+
   tar_target(
     save_waning_plot_omicron,
     ggsave("figures/ve_waning_omicron.png",
@@ -223,6 +228,7 @@ list(
     ggtitle("Predicted waning in vaccine efficacy",
           "against the Omicron variant")
   ),
+
   tar_target(
     save_waning_plot_omicron_data,
     ggsave("figures/ve_waning_omicron_with_data.png",
@@ -233,7 +239,7 @@ list(
   ),
 
 
-  #Posterior density of R0 and immune scape
+  # posterior density of R0 and immune escape
   tar_target(
     omicron_params,
     sim_omicron_params(
@@ -246,6 +252,7 @@ list(
     omicron_params_plot,
     plot_omicron_params(omicron_params)
   ),
+
   tar_target(
     save_omicron_params_plot,
     ggsave("figures/omicron_params.png",
@@ -254,6 +261,7 @@ list(
        height = 7,
        bg = "white")
   ),
+
   tar_target(
     omicron_params_plot_lines,
     plot_omicron_params(
@@ -261,6 +269,7 @@ list(
       neut_fold_lines = c(3, 5, 10, 15)
     )
   ),
+
   tar_target(
     save_omicron_params_plot_lines,
     ggsave("figures/omicron_params_with_lines.png",
@@ -280,6 +289,7 @@ list(
     ) %>%
     plot_omicron_params
   ),
+
   tar_target(
     save_omicron_params_plot_AZ_2_180d,
     ggsave("figures/omicron_params_az2_180d.png",
@@ -299,6 +309,7 @@ list(
     ) %>%
     plot_omicron_params()
   ),
+
   tar_target(
     save_omicron_params_plot_Pfizer_2_180d,
     ggsave("figures/omicron_params_pf_2_180d.png",
@@ -318,6 +329,7 @@ list(
     ) %>%
     plot_omicron_params()
   ),
+
   tar_target(
     save_omicron_params_plot_booster_0d,
     ggsave("figures/omicron_params_booster_0d.png",
@@ -337,6 +349,7 @@ list(
     ) %>%
     plot_omicron_params()
   ),
+
   tar_target(
     save_omicron_params_plot_booster_180d,
     ggsave("figures/omicron_params_booster_180d.png",
@@ -350,6 +363,7 @@ list(
     omicron_neut_fold_plot,
     plot_omicron_neut_fold(omicron_params)
   ),
+
   tar_target(
     save_omicron_neut_fold_plot,
     ggsave("figures/omicron_neut_fold.png",
@@ -359,7 +373,7 @@ list(
        bg = "white")
   ),
 
-  #Given point estimates on avocado, compute VEs:
+  # given point estimates on avocado, compute VEs:
   tar_target(
     omicron_scenarios,
     tibble::tribble(
@@ -394,6 +408,7 @@ list(
         xlim = c(0, 0.6)
       )
   ),
+
   tar_target(
     save_omicron_params_plot_points,
     ggsave("figures/omicron_params_with_points.png",
@@ -411,6 +426,7 @@ list(
       scenarios = omicron_scenarios
     )
   ),
+
   tar_target(
     save_scenario_parameters,
     write_csv(
@@ -428,6 +444,7 @@ list(
       omicron = TRUE
     )
   ),
+
   tar_target(
     save_ve_predictions_omicron_scenarios,
     write_csv(
@@ -503,6 +520,7 @@ list(
     xlab("Days since peak immunity") +
     theme_minimal()
   ),
+
   tar_target(
     save_plot_mean_efficacies,
     ggsave("figures/plot_mean_efficacies.png",
@@ -598,6 +616,7 @@ list(
     ggtitle("Omicron immune evasion as a function of immunity") +
     theme_minimal()
   ),
+
   tar_target(
     save_evasion_plot,
     ggsave(
@@ -621,6 +640,7 @@ list(
       neut_fold_lines = c(3, 5, 10, 15)
     )
   ),
+
   tar_target(
     save_omicron_params_plot_za_120d,
     ggsave("figures/omicron_params_za_120d.png",
