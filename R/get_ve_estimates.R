@@ -13,7 +13,8 @@ get_ve_estimates <- function() {
     get_ve_estimates_andrews_delta(),
     get_ve_estimates_pouwels_delta(),
     get_ve_estimates_eyre_delta(),
-    get_ve_estimates_andrews_omicron()
+    get_ve_estimates_hsa_omicron(),
+    get_ve_estimates_hsa_delta()
   ) %>%
     rowwise() %>%
     mutate(
@@ -35,8 +36,11 @@ get_ve_estimates <- function() {
       !(source == "andrews_omicron" & product == "AZ")
     ) %>%
     mutate(
-      # make all VE lower bounds positive at lowest reposrted resolution
-      ve_lower = pmax(ve_lower, 0.001),
+      # make all ves positive at lowest reported resolution
+      across(
+        starts_with("ve"),
+       ~pmax(.x, 0.001),
+      ),
       # recode boosters as the same product (assume same VEs)
       product = case_when(
         dose == 3 ~ "mRNA booster",
