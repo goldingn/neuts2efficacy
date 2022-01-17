@@ -52,7 +52,7 @@ get_ve_estimates_hsa_omicron <- function() {
       source = "hsa_omicron",
       # convert 'weeks' to days post second dose text says week 1 is 7-13 days,
       # so presumably week 0 is 0-6 days. Compute midpoint in days of other
-      # periods accordingly. For 25+ weeks, assume the midpoint of 25-35 weeks.
+      # periods accordingly. For 25+ weeks, assume the midpoint of 25-30 weeks.
       days_earliest = case_when(
         weeks == "2-4" ~ 7 * 2,
         weeks == "5-9" ~ 7 * 5,
@@ -68,7 +68,7 @@ get_ve_estimates_hsa_omicron <- function() {
         weeks == "10-14" ~ 7 * (14 + 1) - 1,
         weeks == "15-19" ~ 7 * (19 + 1) - 1,
         weeks == "20-24" ~ 7 * (24 + 1) - 1,
-        weeks == "25+" ~ 7 * (35 + 1) - 1,
+        weeks == "25+" ~ 7 * (30 + 1) - 1,
         # UK boosters started Sept 16, so max 4 months
         dose == 3 & weeks == "10+" ~ 7 * 16
       )

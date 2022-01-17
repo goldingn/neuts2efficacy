@@ -16,6 +16,11 @@ get_ve_estimates <- function() {
     get_ve_estimates_hsa_omicron(),
     get_ve_estimates_hsa_delta()
   ) %>%
+    # drop Andrews symptomatic Delta VE estimates, since they are superseded by
+    # (and conflict with) HSA version
+    filter(
+      !(source == "andrews_delta" & outcome == "symptoms")
+    ) %>%
     rowwise() %>%
     mutate(
       days = mean(days_earliest:days_latest),
