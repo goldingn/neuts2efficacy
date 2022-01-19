@@ -8,14 +8,14 @@
 #' @return
 #' @author Nick Golding
 #' @export
-get_vaccine_cohorts_at_date <- function(vaccine_scenarios, date) {
+get_vaccine_cohorts_at_date <- function(vaccine_scenarios, target_date) {
 
   # set future times to NA and collapse to get contemporary data
   vaccine_scenarios %>%
     mutate(
       across(
         starts_with("date"),
-        ~if_else(.x > date, as.Date(NA), .x)
+        ~if_else(.x > target_date, as.Date(NA), .x)
       )
     ) %>%
     group_by(
@@ -72,7 +72,7 @@ get_vaccine_cohorts_at_date <- function(vaccine_scenarios, date) {
       )
     ) %>%
     mutate(
-      days_ago = as.numeric(Sys.Date() - date)
+      days_ago = as.numeric(target_date - date)
     ) %>%
     select(
       -starts_with("vaccine"),
