@@ -38,6 +38,33 @@ add_omicron_model <- function(neut_model) {
   reinfection_correction_sd <- mean(abs(reinfection_correction_bounds - reinfection_correction_estimate)) / 1.96
   reinfection_correction <- normal(reinfection_correction_estimate, reinfection_correction_sd)
 
+  # define likelihood for R0 ratio based on ratio of secondary attack rates among
+  # unvaccinated (assuming R0 is linear in the transmission probability)
+
+  # Lyngse et al. https://www.medrxiv.org/content/10.1101/2021.12.27.21268278v1
+  # give an estimated 'HSAR' ratio of 1.17 (0.99-1.38), but the way they
+  # calculated this is equivalent to a HFAR, rather than a transmission
+  # probability. So apply an approximate correction in the likelihood to convert
+  # from a transmission probability ratio to an HFAR ratio. Base this on Fig 1
+  # from Sharker et al. https://doi.org/10.1371/journal.pcbi.1008601, assuming
+  # linearity in the SAR-FAR ratio over the range of FAR values.
+
+  # get SARs for both variants
+  sar_delta <- normal(0.3, 1, truncation = c(0, 1))
+  sar_omicron <- sar_delta * R0_ratio
+
+  # convert to FAR ratio (what Lyngse measured)
+  far_delta <- far_to_sar(sar_delta)
+  far_omicron <- far_to_sar(sar_omicron)
+  far_ratio <- far_omicron / far_delta
+
+  # define the likelihood over this data
+  observed_far_ratio <- 1.17
+  far_ratio_bounds <- c(0.99, 1.38)
+  far_ratio_sd <- mean(abs(far_ratio_bounds - observed_far_ratio)) / 1.96
+
+  distribution(observed_far_ratio) <- normal(far_ratio, far_ratio_sd, truncation = c(0, Inf))
+
   # # uncertainty in the log hazard ratio data
   # reinfection_log_hazard_ratio_sd <- normal(0, 1, truncation = c(0, Inf))
 
