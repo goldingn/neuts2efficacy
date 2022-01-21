@@ -178,7 +178,7 @@ add_omicron_model <- function(neut_model) {
   reff_ratio_bounds <- c(1.3, 2.9)
   reff_ratio_estimate <- mean(reff_ratio_bounds)
   reff_ratio_sd <- mean(abs(reff_ratio_bounds - reff_ratio_estimate)) / 1.96
-  distribution(reff_ratio_estimate) <- normal(expected_reff_ratio, reff_ratio_sd)
+  # distribution(reff_ratio_estimate) <- normal(expected_reff_ratio, reff_ratio_sd)
 
   # define likelihood on reinfection hazard ratios with expectation of VE for
   # symptomatic disease (not acquisition, because of detection method), and with
@@ -194,8 +194,8 @@ add_omicron_model <- function(neut_model) {
   omicron_expected_log_hazard_ratio <- log(1 - omicron_ves[symptoms_idx]) + reinfection_correction
   delta_expected_log_hazard_ratio <- log(1 - delta_ves[symptoms_idx]) + reinfection_correction
 
-  distribution(reinfection_log_hazard_ratio_omicron) <- normal(omicron_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
-  distribution(reinfection_log_hazard_ratio_delta) <- normal(delta_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
+  # distribution(reinfection_log_hazard_ratio_omicron) <- normal(omicron_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
+  # distribution(reinfection_log_hazard_ratio_delta) <- normal(delta_expected_log_hazard_ratio, reinfection_log_hazard_ratio_sd)
 
   # define a likelihood on Delta R0 vs Reff. Assume a Delta R0 of 6, with 20%
   # reduction (distancing, mask wearing) for ZA,
@@ -203,7 +203,7 @@ add_omicron_model <- function(neut_model) {
   expected_log_reff_delta <- log(R0_delta * (1 - za_distancing_effect) * immune_multiplier_delta)
   log_reff_delta <- log(0.8)
   log_reff_delta_sd <- 0.2
-  distribution(log_reff_delta) <- normal(expected_log_reff_delta, log_reff_delta_sd)
+  # distribution(log_reff_delta) <- normal(expected_log_reff_delta, log_reff_delta_sd)
 
   # redefine the greta model, tracing all the things that were traced in the previous version
   new_traced <- module(
