@@ -20,11 +20,13 @@ format_scenario_parameters <- function(neut_model, draws, scenarios, tolerance =
     include_immune_evasion = TRUE
   )
 
+  sims_tibble <- sims %>%
+    lapply(c) %>%
+    as_tibble()
+
   # simulate them all, join to scenarios, subset to those matching the scenarios
   # and summarise
-  sims %>%
-    lapply(c) %>%
-    as_tibble() %>%
+  scenario_params <- sims_tibble %>%
     full_join(
       scenarios,
       by = character()
@@ -55,6 +57,31 @@ format_scenario_parameters <- function(neut_model, draws, scenarios, tolerance =
     pivot_wider(
       names_from = scenario,
       values_from = value
+    )
+
+  # calculate posterior means and add those on too
+  means <- sims_tibble %>%
+    select(
+      -za_immune_evasion
+    ) %>%
+    summarise(
+      across(
+        everything(),
+        mean
+      )
+    ) %>%
+    # need to turn these into named lists now
+    pivot_longer(
+      cols = everything(),
+      names_to = "parameter",
+      values_to = "estimate"
+    )
+
+  # return both
+  scenario_params %>%
+    full_join(
+      means,
+      by = "parameter"
     )
 
 }
