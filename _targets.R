@@ -118,7 +118,9 @@ list(
   tar_target(
     ve_predictions_delta,
     predict_ves(
-      neut_model, draws
+      neut_model,
+      draws,
+      omicron_infection_multiplier = 4.4
     )
   ),
   tar_target(
@@ -172,7 +174,8 @@ list(
     predict_ves(
       neut_model,
       draws,
-      omicron = TRUE
+      omicron = TRUE,
+      omicron_infection_multiplier = 14.4
     )
   ),
 
@@ -218,15 +221,15 @@ list(
   tar_target(
     waning_plot_omicron_data,
     plot_waning(
-    ve_predictions_omicron,
-    omicron_ve_data,
-    immunity_levels = c(
-      "mRNA booster",
-      "Pfizer vaccine dose 2",
-      "AZ vaccine dose 2")
+      ve_predictions_omicron,
+      omicron_ve_data,
+      immunity_levels = c(
+        "mRNA booster",
+        "Pfizer vaccine dose 2",
+        "AZ vaccine dose 2")
     ) +
-    ggtitle("Predicted waning in vaccine efficacy",
-          "against the Omicron variant")
+      ggtitle("Predicted waning in vaccine efficacy",
+              "against the Omicron variant")
   ),
 
   tar_target(

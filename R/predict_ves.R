@@ -8,7 +8,7 @@
 #' @return
 #' @author Nick Golding
 #' @export
-predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
+predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron_infection_multiplier = 1) {
 
   log10_neuts_list <- list(
     neut_model$model_objects$peak_mean_log10_neuts[1],
@@ -18,7 +18,19 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
     neut_model$model_objects$peak_mean_log10_neuts[5]
   )
   names(log10_neuts_list) <- neut_model$lookups$immunity
+
+  # ad WT infection
   log10_neuts_list$infection <- log10_neuts_list$Pfizer_dose_2 * 0
+
+  # increase neuts when paired with Omicron infection
+  for(old_name in names(log10_neuts_list)) {
+
+    new_name <- paste0(old_name, "_omicron")
+    old_neut <- log10_neuts_list[[old_name]]
+    new_neut <- old_neut + log10(omicron_infection_multiplier)
+    log10_neuts_list[[new_name]] <- new_neut
+
+  }
 
   # prepare for prediction
 
@@ -93,7 +105,13 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000) {
         immunity == "Pfizer_dose_2" ~ "Pfizer vaccine dose 2",
         immunity == "Pfizer_dose_1" ~ "Pfizer vaccine dose 1",
         immunity == "mRNA_booster" ~ "mRNA booster",
-        immunity == "infection" ~ "Infection"
+        immunity == "infection" ~ "Infection (WT)",
+        immunity == "infection_omicron" ~ "Infection (Omicron)",
+        immunity == "AZ_dose_2_omicron" ~ "AZ vaccine dose 2 + Omicron infection",
+        immunity == "AZ_dose_1_omicron" ~ "AZ vaccine dose 1 + Omicron_infection",
+        immunity == "Pfizer_dose_2_omicron" ~ "Pfizer vaccine dose 2 + Omicron infection",
+        immunity == "Pfizer_dose_1_omicron" ~ "Pfizer vaccine dose 1 + Omicron infection",
+        immunity == "mRNA_booster_omicron" ~ "mRNA booster + Omicron infection",
       )
     )
 
