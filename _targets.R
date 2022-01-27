@@ -263,10 +263,28 @@ list(
   tar_target(
     save_omicron_params_plot,
     ggsave("figures/omicron_params.png",
-       plot = omicron_params_plot,
-       width = 7,
-       height = 7,
-       bg = "white")
+           plot = omicron_params_plot,
+           width = 7,
+           height = 7,
+           bg = "white")
+  ),
+
+  tar_target(
+    omicron_params_plot_100pc,
+    plot_omicron_params(omicron_params) +
+      coord_cartesian(
+        xlim = c(0, 1),
+        ylim = c(0.5, 1.4)
+      )
+  ),
+
+  tar_target(
+    save_omicron_params_plot_100pc,
+    ggsave("figures/omicron_params_100pc.png",
+           plot = omicron_params_plot_100pc,
+           width = 7,
+           height = 7,
+           bg = "white")
   ),
 
   tar_target(
