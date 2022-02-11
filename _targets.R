@@ -192,6 +192,9 @@ list(
     plot_waning(
       ve_predictions_omicron,
       immunity_levels = c(
+        "Omicron Infection",
+        "Pfizer vaccine dose 2 + Omicron infection",
+        "mRNA booster + Omicron infection",
         "mRNA booster",
         "Pfizer vaccine dose 2",
         "AZ vaccine dose 2")
@@ -224,6 +227,9 @@ list(
       ve_predictions_omicron,
       omicron_ve_data,
       immunity_levels = c(
+        "Omicron Infection",
+        "Pfizer vaccine dose 2 + Omicron infection",
+        "mRNA booster + Omicron infection",
         "mRNA booster",
         "Pfizer vaccine dose 2",
         "AZ vaccine dose 2")

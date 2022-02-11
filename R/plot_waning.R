@@ -8,22 +8,26 @@
 #' @return
 #' @author Nick Golding
 #' @export
-plot_waning <- function(ve_predictions,
-                        ve_data_modelling = NULL,
-                        immunity_levels = c(
-                          "mRNA booster",
-                          "Pfizer vaccine dose 2",
-                          "Pfizer vaccine dose 1",
-                          "AZ vaccine dose 2",
-                          "AZ vaccine dose 1",
-                          "Infection"
-                        )
-                        ) {
+plot_waning <- function(
+  ve_predictions,
+  ve_data_modelling = NULL,
+  immunity_levels = c(
+    "mRNA booster",
+    "Pfizer vaccine dose 2",
+    "Pfizer vaccine dose 1",
+    "AZ vaccine dose 2",
+    "AZ vaccine dose 1",
+    "WT Infection"
+  )
+) {
 
   immunity_colours <- c(
     "mRNA booster" = lighten("darkorchid4", 0.1),
     "Pfizer vaccine dose 2" = lighten("darkorchid1", 0.1),
-    "Infection" = grey(0.9),
+    "WT Infection" = grey(0.9),
+    "Omicron Infection" = grey(0.85),
+    "Pfizer vaccine dose 2 + Omicron infection" = "darkorchid1",
+    "mRNA booster + Omicron infection" = "darkorchid4",
     "AZ vaccine dose 2" = lighten("firebrick1", 0.1),
     "Pfizer vaccine dose 1" = lighten("darkorchid1", 0.8),
     "AZ vaccine dose 1" = lighten("firebrick1", 0.8)

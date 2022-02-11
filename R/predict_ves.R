@@ -19,13 +19,13 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
   )
   names(log10_neuts_list) <- neut_model$lookups$immunity
 
-  # ad WT infection
-  log10_neuts_list$infection <- log10_neuts_list$Pfizer_dose_2 * 0
+  # add WT infection - just 0 because this is the baseline
+  log10_neuts_list$wt_infection <- log10_neuts_list$Pfizer_dose_2 * 0
 
   # increase neuts when paired with Omicron infection
   for(old_name in names(log10_neuts_list)) {
 
-    new_name <- paste0(old_name, "_omicron")
+    new_name <- paste0(old_name, "_plus_omicron_infection")
     old_neut <- log10_neuts_list[[old_name]]
     new_neut <- old_neut + log10(omicron_infection_multiplier)
     log10_neuts_list[[new_name]] <- new_neut
@@ -35,7 +35,7 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
   # prepare for prediction
 
   # if we are predicting for omicron, add the omicron adjustment to the log10
-  # neuts
+  # neuts, and add an omicron-only infection
   if (omicron) {
 
     omicron_adjustment <- neut_model$model_objects$omicron_log10_neut_fold
@@ -45,6 +45,9 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
       "+",
       omicron_adjustment
     )
+
+    # add omicron infection protection against omicron (same as WT infection against WT)
+    log10_neuts_list$omicron_infection <- log10_neuts_list$Pfizer_dose_2 * 0
 
   }
 
@@ -105,15 +108,15 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
         immunity == "Pfizer_dose_2" ~ "Pfizer vaccine dose 2",
         immunity == "Pfizer_dose_1" ~ "Pfizer vaccine dose 1",
         immunity == "mRNA_booster" ~ "mRNA booster",
-        immunity == "infection" ~ "Infection (WT)",
-        immunity == "infection_omicron" ~ "Infection (Omicron)",
-        immunity == "AZ_dose_2_omicron" ~ "AZ vaccine dose 2 + Omicron infection",
-        immunity == "AZ_dose_1_omicron" ~ "AZ vaccine dose 1 + Omicron_infection",
-        immunity == "Pfizer_dose_2_omicron" ~ "Pfizer vaccine dose 2 + Omicron infection",
-        immunity == "Pfizer_dose_1_omicron" ~ "Pfizer vaccine dose 1 + Omicron infection",
-        immunity == "mRNA_booster_omicron" ~ "mRNA booster + Omicron infection",
+        immunity == "wt_infection" ~ "WT Infection",
+        immunity == "omicron_infection" ~ "Omicron Infection",
+        immunity == "wt_infection_plus_omicron_infection" ~ "WT Infection + Omicron infection",
+        immunity == "AZ_dose_2_plus_omicron_infection" ~ "AZ vaccine dose 2 + Omicron infection",
+        immunity == "AZ_dose_1_plus_omicron_infection" ~ "AZ vaccine dose 1 + Omicron_infection",
+        immunity == "Pfizer_dose_2_plus_omicron_infection" ~ "Pfizer vaccine dose 2 + Omicron infection",
+        immunity == "Pfizer_dose_1_plus_omicron_infection" ~ "Pfizer vaccine dose 1 + Omicron infection",
+        immunity == "mRNA_booster_plus_omicron_infection" ~ "mRNA booster + Omicron infection",
       )
     )
-
 
 }
