@@ -197,7 +197,9 @@ list(
         "mRNA booster + Omicron infection",
         "mRNA booster",
         "Pfizer vaccine dose 2",
-        "AZ vaccine dose 2")
+        "AZ vaccine dose 2",
+        "mRNA dose 4",
+        "mRNA dose 4 + Omicron infection")
       ) +
       ggtitle("Predicted waning in vaccine efficacy",
               "against the Omicron variant")

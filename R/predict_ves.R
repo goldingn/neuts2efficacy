@@ -22,6 +22,9 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
   # add WT infection - just 0 because this is the baseline
   log10_neuts_list$wt_infection <- log10_neuts_list$Pfizer_dose_2 * 0
 
+  # Fold increase of fourth dose vs third dose
+  log10_neuts_list$mRNA_dose_4 <- log10_neuts_list$mRNA_booster + log10(1.33)
+
   # increase neuts when paired with Omicron infection
   for(old_name in names(log10_neuts_list)) {
 
@@ -116,6 +119,8 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
         immunity == "Pfizer_dose_2_plus_omicron_infection" ~ "Pfizer vaccine dose 2 + Omicron infection",
         immunity == "Pfizer_dose_1_plus_omicron_infection" ~ "Pfizer vaccine dose 1 + Omicron infection",
         immunity == "mRNA_booster_plus_omicron_infection" ~ "mRNA booster + Omicron infection",
+        immunity == "mRNA_dose_4" ~ "mRNA dose 4",
+        immunity == "mRNA_dose_4_plus_omicron_infection" ~ "mRNA dose 4 + Omicron infection"
       )
     )
 
