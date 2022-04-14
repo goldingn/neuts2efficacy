@@ -386,7 +386,7 @@ list(
   ),
 
   tar_target(
-    omicrom_params_plot_za_120d,
+    omicron_params_plot_za_120d,
     sim_omicron_params(
       neut_model,
       draws,
@@ -401,7 +401,7 @@ list(
   tar_target(
     save_omicron_params_plot_za_120d,
     ggsave("figures/omicron_params_za_120d.png",
-       plot = omicrom_params_plot_za_120d,
+       plot = omicron_params_plot_za_120d,
        width = 7,
        height = 7,
        bg = "white")
