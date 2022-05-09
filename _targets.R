@@ -405,6 +405,25 @@ list(
        width = 7,
        height = 7,
        bg = "white")
+  ),
+
+  tar_target(
+    formatted_parameters,
+    format_parameters(
+      neut_model = neut_model,
+      draws = draws
+    )
+  ),
+
+  tar_target(
+    save_formatted_parameters,
+    readr::write_csv(
+      x = tibble(
+        parameter = names(formatted_parameters),
+        value = formatted_parameters
+      ),
+      file = "outputs/formatted_parameters.csv"
+    )
   )
 
 )
