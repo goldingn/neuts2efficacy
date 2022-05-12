@@ -8,7 +8,14 @@
 #' @return
 #' @author Nick Golding
 #' @export
-predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron_infection_multiplier = 1) {
+predict_ves <- function(
+  neut_model,
+  draws,
+  omicron = FALSE,
+  nsim = 1000,
+  omicron_infection_multiplier = 1,
+  neut_immune_escape = 1
+) {
 
   log10_neuts_list <- list(
     neut_model$model_objects$peak_mean_log10_neuts[1],
@@ -16,7 +23,15 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
     neut_model$model_objects$peak_mean_log10_neuts[3],
     neut_model$model_objects$peak_mean_log10_neuts[4],
     neut_model$model_objects$peak_mean_log10_neuts[5]
-  )
+  ) %>%
+    lapply(
+      FUN = function(x){
+        x + log10(neut_immune_escape)
+        # need to pass in as fraction, e.g. if 5-fold fewer neuts, then neut_immune_escape = 1/5
+      }
+    )
+
+
   names(log10_neuts_list) <- neut_model$lookups$immunity
 
   # add WT infection - just 0 because this is the baseline
@@ -25,12 +40,25 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
   # Fold increase of fourth dose vs third dose
   log10_neuts_list$mRNA_dose_4 <- log10_neuts_list$mRNA_booster + log10(1.33)
 
+  log10_neuts_mRNA_booster <- log10_neuts_list$mRNA_booster
+
   # increase neuts when paired with Omicron infection
   for(old_name in names(log10_neuts_list)) {
 
     new_name <- paste0(old_name, "_plus_omicron_infection")
     old_neut <- log10_neuts_list[[old_name]]
-    new_neut <- old_neut + log10(omicron_infection_multiplier)
+
+
+    # new_neut <- old_neut + log10(omicron_infection_multiplier)
+
+
+    # swap out
+    if(old_name %in% c("AZ_dose_1", "Pfizer_dose_1")) {
+      new_neut <- old_neut + log10(omicron_infection_multiplier)
+    } else{
+      new_neut <- log10_neuts_mRNA_booster - neut_model$model_objects$omicron_log10_neut_fold
+    }
+
     log10_neuts_list[[new_name]] <- new_neut
 
   }
