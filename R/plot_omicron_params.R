@@ -30,7 +30,8 @@ plot_omicron_params <- function(omicron_params) {
       fill = lighten("seagreen", 0.1)
     ) +
     scale_x_continuous(
-      labels = scales::percent
+      labels = scales::percent,
+      limits = c(0, 1)
     ) +
     geom_hline(
       yintercept = 1,
@@ -40,6 +41,7 @@ plot_omicron_params <- function(omicron_params) {
       xintercept = 0,
       linetype = 2
     ) +
+    ylim(0.2, 1.5) +
     ggtitle("Immune escape and relative transmissibility of Omicron vs. Delta") +
     xlab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
     ylab("Omicron relative transmissibility (R0 ratio)") +
