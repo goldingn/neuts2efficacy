@@ -41,6 +41,7 @@ plot_omicron_params <- function(omicron_params, neut_fold_lines = c()) {
       xintercept = 0,
       linetype = 2
     ) +
+    ylim(0.2, 1.5) +
     ggtitle("Immune escape and relative transmissibility of Omicron vs. Delta") +
     xlab("Omicron immune evasion (reduction in overall VE against transmission, compared to Delta)") +
     ylab("Omicron relative transmissibility (R0 ratio)") +
