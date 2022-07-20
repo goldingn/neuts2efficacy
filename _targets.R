@@ -261,8 +261,8 @@ list(
     omicron_params_plot,
     plot_omicron_params(omicron_params) +
       coord_cartesian(
-        xlim = c(0, 0.7),
-        ylim = c(0.5, 1.4)
+        xlim = c(0, 1),
+        ylim = c(0.2, 1.5)
       )
   ),
 
