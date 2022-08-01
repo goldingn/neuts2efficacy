@@ -36,10 +36,13 @@ immune_evasion <- function(
     peak_baseline_immunity_log10_neut_fold <- neut_model$model_objects$peak_mean_log10_neuts[idx]
   }
 
-  baseline_immunity_log10_neut_fold <- log10_neut_over_time(
+  baseline_immunity_log10_neut_fold <- log10_neut_over_time_varying_analytic(
     time = days_waning,
     maximum_log10_neut = peak_baseline_immunity_log10_neut_fold,
-    decay = neut_model$model_objects$neut_decay
+    max_decay = neut_model$model_objects$neut_decay,
+    min_decay = neut_model$model_objects$min_neut_decay,
+    end_decline = neut_model$model_objects$decay_end_decline,
+    start_decline = neut_model$model_objects$decay_start_decline
   )
 
   # fold change for omicron

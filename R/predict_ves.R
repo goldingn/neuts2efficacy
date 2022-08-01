@@ -71,10 +71,13 @@ predict_ves <- function(neut_model, draws, omicron = FALSE, nsim = 1000, omicron
     immunity_idx = match(ve_prediction_data$immunity, lookups$immunity)
   )
 
-  mean_log10_neuts_all <- log10_neut_over_time(
+  mean_log10_neuts_all <- log10_neut_over_time_varying_analytic(
     time = ve_prediction_data$days,
     maximum_log10_neut = peak_mean_log10_neuts_all[indices$immunity_idx],
-    decay = neut_model$model_objects$neut_decay
+    max_decay = neut_model$model_objects$neut_decay,
+    min_decay = neut_model$model_objects$min_neut_decay,
+    end_decline = neut_model$model_objects$decay_end_decline,
+    start_decline = neut_model$model_objects$decay_start_decline
   )
 
   # predict VEs

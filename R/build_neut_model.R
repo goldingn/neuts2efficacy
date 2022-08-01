@@ -39,8 +39,24 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   neut_halflife_raw <- normal(0, 1)
   neut_halflife <- 108 + neut_halflife_raw * 10
 
-  # convert to exponential rate parameter
+  # minimum halflife - with a  prior of 10 years as per Khoury et al.
+  min_neut_halflife_raw <- normal(0, 1)
+  min_neut_halflife <- 365*10 + min_neut_halflife_raw * 10
+
+  # convert to exponential rate parameters
   neut_decay <- log(2) / neut_halflife
+  min_neut_decay <- log(2) / min_neut_halflife
+
+  # time (in days) at which the decay rate starts to drop towards the minimum
+  decay_start_decline_raw <- normal(0, 1)
+  decay_start_decline <- 250 + decay_start_decline_raw * 10
+
+  # time (in days) over which the decay drops towards the minimum
+  # mean 1.5y , standard deviation ~ 3 months, constrained to be positive
+  decay_decline_duration <- normal(365 * 1.5, 365 * 0.25, truncation = c(0, Inf))
+
+  # time (in days) at which the decay rate reaches the minimum
+  decay_end_decline <- decay_start_decline + decay_decline_duration
 
   # log slope of the logit mapping from neuts to VEs
   log_k <- normal(0, 1)
@@ -100,11 +116,15 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
   peak_mean_log10_neut_vec <- peak_mean_log10_neuts[indices$immunity_idx] +
     variant_log10_neut_fold[indices$variant_idx]
 
-  # compute expected values on given days post peak
-  mean_log10_neut_vec <- log10_neut_over_time(
+  # compute expected values on given days post peak, with time-varying decay
+  # (leading to a plateau in immunity)
+  mean_log10_neut_vec <- log10_neut_over_time_varying_analytic(
     time = ve_data_modelling$days,
     maximum_log10_neut = peak_mean_log10_neut_vec,
-    decay = neut_decay
+    max_decay = neut_decay,
+    min_decay = min_neut_decay,
+    end_decline = decay_end_decline,
+    start_decline = decay_start_decline
   )
 
   # population standard deviation of log10 neut titres
@@ -136,6 +156,9 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
     booster_multiplier,
     log_k,
     neut_halflife,
+    min_neut_halflife,
+    decay_start_decline,
+    decay_decline_duration,
     c50s,
     dose_1_mean_log10_neuts,
     dose_2_mean_log10_neuts
@@ -147,7 +170,12 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
     variant_log10_neut_fold,
     booster_multiplier,
     neut_halflife,
+    min_neut_halflife,
+    decay_start_decline,
+    decay_decline_duration,
+    decay_end_decline,
     neut_decay,
+    min_neut_decay,
     log_k,
     ve_logit_obs_sd_shared,
     c50s,

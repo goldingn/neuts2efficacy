@@ -84,16 +84,22 @@ add_omicron_model <- function(neut_model) {
 
   # get log10 neuts of convalescent (0) against omicron
   # (omicron_log10_neut_fold), this number of days post-peak
-  omicron_log10_neuts <- log10_neut_over_time(
+  omicron_log10_neuts <- log10_neut_over_time_varying_analytic(
     time = za_waning_days,
     maximum_log10_neut = za_baseline_immunity_log10_neut_fold + omicron_log10_neut_fold,
-    decay = neut_model$model_objects$neut_decay
+    max_decay = neut_model$model_objects$neut_decay,
+    min_decay = neut_model$model_objects$min_neut_decay,
+    end_decline = neut_model$model_objects$decay_end_decline,
+    start_decline = neut_model$model_objects$decay_start_decline
   )
 
-  delta_log10_neuts <- log10_neut_over_time(
+  delta_log10_neuts <- log10_neut_over_time_varying_analytic(
     time = za_waning_days,
     maximum_log10_neut = za_baseline_immunity_log10_neut_fold,
-    decay = neut_model$model_objects$neut_decay
+    max_decay = neut_model$model_objects$neut_decay,
+    min_decay = neut_model$model_objects$min_neut_decay,
+    end_decline = neut_model$model_objects$decay_end_decline,
+    start_decline = neut_model$model_objects$decay_start_decline
   )
 
   # predict VEs for, for convalescent against omicron and against Delta for the
