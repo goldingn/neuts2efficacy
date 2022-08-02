@@ -53,7 +53,7 @@ build_neut_model <- function(ve_estimates, neut_ratios_vaccine) {
 
   # time (in days) over which the decay drops towards the minimum
   # mean 1.5y , standard deviation ~ 3 months, constrained to be positive
-  decay_decline_duration <- normal(365 * 1.5, 365 * 0.25, truncation = c(0, Inf))
+  decay_decline_duration <- normal(365 * 1.5 - 250, 365 * 0.25, truncation = c(0, Inf))
 
   # time (in days) at which the decay rate reaches the minimum
   decay_end_decline <- decay_start_decline + decay_decline_duration
