@@ -37,17 +37,11 @@ list(
 
   # greta model of relationship between neuts and efficacies
   tar_target(
-    neut_model_initial,
+    neut_model,
     build_neut_model(
       ve_estimates,
       neut_ratios_vaccine
     )
-  ),
-
-  # adding omicron parameters
-  tar_target(
-    neut_model,
-    add_omicron_model(neut_model_initial)
   ),
 
   # fit model and check convergence
@@ -246,164 +240,6 @@ list(
        plot = waning_plot_omicron_data,
        width = 9,
        height = 6,
-       bg = "white")
-  ),
-
-
-  # posterior density of R0 and immune escape
-  tar_target(
-    omicron_params,
-    sim_omicron_params(
-      neut_model,
-      draws
-    )
-  ),
-
-  tar_target(
-    omicron_params_plot,
-    plot_omicron_params(omicron_params) +
-      coord_cartesian(
-        xlim = c(0, 0.7),
-        ylim = c(0.5, 1.4)
-      )
-  ),
-
-  tar_target(
-    save_omicron_params_plot,
-    ggsave("figures/omicron_params.png",
-           plot = omicron_params_plot,
-           width = 7,
-           height = 7,
-           bg = "white")
-  ),
-
-  tar_target(
-    omicron_params_plot_100pc,
-    plot_omicron_params(omicron_params) +
-      coord_cartesian(
-        xlim = c(0, 1),
-        ylim = c(0.5, 1.4)
-      )
-  ),
-
-  tar_target(
-    save_omicron_params_plot_100pc,
-    ggsave("figures/omicron_params_100pc.png",
-           plot = omicron_params_plot_100pc,
-           width = 7,
-           height = 7,
-           bg = "white")
-  ),
-
-  tar_target(
-    omicron_params_plot_lines,
-    plot_omicron_params(
-      omicron_params,
-      neut_fold_lines = c(3, 5, 10, 15)
-    )
-  ),
-
-  tar_target(
-    save_omicron_params_plot_lines,
-    ggsave("figures/omicron_params_with_lines.png",
-       plot = omicron_params_plot_lines,
-       width = 7,
-       height = 7,
-       bg = "white")
-  ),
-
-  tar_target(
-    omicron_neut_fold_plot,
-    plot_omicron_neut_fold(omicron_params)
-  ),
-
-  tar_target(
-    save_omicron_neut_fold_plot,
-    ggsave("figures/omicron_neut_fold.png",
-       plot = omicron_neut_fold_plot,
-       width = 7,
-       height = 7,
-       bg = "white")
-  ),
-
-  # given point estimates on avocado, compute VEs:
-  tar_target(
-    omicron_scenarios,
-    tibble::tribble(
-      ~scenario, ~R0_ratio_target, ~immune_evasion_target,
-      "pessimistic", 1.1, 0.5,
-      "intermediate", 0.85, 0.3,
-      "optimistic", 0.6, 0.1
-    )
-  ),
-
-  tar_target(
-    omicron_params_plot_points,
-    omicron_params_plot +
-      geom_point(
-        aes(
-          x = immune_evasion_target,
-          y = R0_ratio_target
-        ),
-        data = omicron_scenarios
-      ) +
-      geom_text(
-        aes(
-          x = immune_evasion_target,
-          y = R0_ratio_target,
-          label = scenario
-        ),
-        data = omicron_scenarios,
-        vjust = 0,
-        nudge_y = 0.02
-      )
-  ),
-
-  tar_target(
-    save_omicron_params_plot_points,
-    ggsave("figures/omicron_params_with_points.png",
-       plot = omicron_params_plot_points,
-       width = 7,
-       height = 7,
-       bg = "white")
-  ),
-
-  tar_target(
-    scenario_parameters,
-    format_scenario_parameters(
-      neut_model = neut_model,
-      draws = draws,
-      scenarios = omicron_scenarios
-    )
-  ),
-
-  tar_target(
-    save_scenario_parameters,
-    write_csv(
-      scenario_parameters,
-      "outputs/scenario_parameters_omicron.csv"
-    )
-  ),
-
-  tar_target(
-    omicron_params_plot_za_120d,
-    sim_omicron_params(
-      neut_model,
-      draws,
-      baseline_immunity = "za",
-      days_waning = 120
-    ) %>%
-    plot_omicron_params(
-      neut_fold_lines = c(3, 5, 10, 15)
-    )
-  ),
-
-  tar_target(
-    save_omicron_params_plot_za_120d,
-    ggsave("figures/omicron_params_za_120d.png",
-       plot = omicron_params_plot_za_120d,
-       width = 7,
-       height = 7,
        bg = "white")
   )
 
