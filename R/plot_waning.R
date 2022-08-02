@@ -91,7 +91,7 @@ plot_waning <- function(
       values = c("two doses" = 0.8, "one dose" = 0.1)
     ) +
     coord_cartesian(
-      xlim = c(0, 200)
+      xlim = c(0, 365)
     ) +
     ylab("Efficacy") +
     xlab("Days since peak immunity") +
