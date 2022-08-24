@@ -46,8 +46,21 @@ list(
 
   # adding omicron parameters
   tar_target(
-    neut_model,
+    neut_model_with_omicron,
     add_omicron_model(neut_model_initial)
+  ),
+
+  # load all the required data on the levels of immunity, and fraction of the
+  # population in each age group that falls in it
+  tar_target(
+    immunity_strata,
+    load_immunity_strata()
+  ),
+
+  # adding calibration against observed Reff reductions in Aus
+  tar_target(
+    neut_model,
+    add_aus_reff_calibration(neut_model_with_omicron, immunity_strata)
   ),
 
   # fit model and check convergence
