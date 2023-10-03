@@ -120,7 +120,7 @@ list(
     predict_ves(
       neut_model,
       draws,
-      omicron_infection_multiplier = 4.4
+      omicron_infection_multiplier = 4.4 # increase in neuts against D if infected by O
     )
   ),
   tar_target(
@@ -175,7 +175,18 @@ list(
       neut_model,
       draws,
       omicron = TRUE,
-      omicron_infection_multiplier = 14.4
+      omicron_infection_multiplier = 14.4 # increase in neuts against Omicron if infected by Omicron
+    )
+  ),
+
+  tar_target(
+    ve_predictions_omicron_super_escape, # hypothetical can adjust as necessary
+    predict_ves(
+      neut_model,
+      draws,
+      omicron = TRUE,
+      omicron_infection_multiplier = 14.4, # increase in newts against Omi if infected by Omi
+      neut_immune_escape = 1/5
     )
   ),
 
