@@ -10,4 +10,5 @@ staging/
 .RData
 .Ruserdata
 todo.txt
-
+*.html
+.DS_Store
